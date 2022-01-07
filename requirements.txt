@@ -1,4 +1,4 @@
 PySide6
 shiboken6
 pyinstaller
-ssh2-python
+paramiko
