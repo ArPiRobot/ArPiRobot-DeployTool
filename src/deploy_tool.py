@@ -1,14 +1,18 @@
 
 import socket
 from typing import Any, Callable, List, Optional
-from PySide6.QtCore import QFile, QIODevice, QObject, QRunnable, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtWidgets import QDialog, QMainWindow, QMessageBox, QProgressDialog, QWidget
+from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
+from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QWidget
 from paramiko.pkey import PKey
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
 from paramiko.client import SSHClient, MissingHostKeyPolicy
 from util import settings_manager, theme_manager
+from zipfile import ZipFile
+import time
+import os
+import shutil
 
 
 class Task(QRunnable, QObject):
@@ -41,6 +45,8 @@ class AcceptMissingKeyPolicy(MissingHostKeyPolicy):
 
 class DeployToolWindow(QMainWindow):
 
+    change_progress_msg_sig = Signal(str)
+
     ############################################################################
     # General UI
     ############################################################################
@@ -59,28 +65,42 @@ class DeployToolWindow(QMainWindow):
             self.setWindowTitle(self.windowTitle() + " v" + ver)
         version_file.close()
 
-        # Setup & initial state
+        # SSH setup and initial state
         self.ssh: SSHClient = SSHClient()
         self.ssh.set_missing_host_key_policy(AcceptMissingKeyPolicy())
         self.ssh_check_timer = QTimer()
         self.ssh_connected = False
-        self.disable_robot_tabs()
+
+        # Populate connection fields with default information
+        self.ui.txt_address.setText(settings_manager.robot_address)
+        self.ui.txt_username.setText(settings_manager.robot_user)
+        self.ui.txt_password.setText("arpirobot")
+        self.ui.cbx_longer_timeouts.setChecked(settings_manager.longer_timeouts)
 
         # Progress dialog (shared between tasks)
         self.pdialog = QProgressDialog(parent=self)
+        self.pdialog.cancel()
+        self.pdialog.hide()
 
         # Active background tasks
         self.tasks: List[Task] = []
 
         # Signal / Slot setup
+        self.change_progress_msg_sig.connect(self.do_change_progress_msg)
+
         self.ui.act_settings.triggered.connect(self.open_settings)
         self.ui.act_about.triggered.connect(self.open_about)
 
         self.ssh_check_timer.timeout.connect(self.check_ssh_connection)
 
+        self.ui.tabs_main.currentChanged.connect(self.tab_changed)
+
+        self.ui.btn_install_update.clicked.connect(self.install_update_package)
+
         self.ui.btn_connect.clicked.connect(self.toggle_connection)
 
         # Startup
+        self.disable_robot_tabs()
         self.ssh_check_timer.start(1000)
 
     def open_settings(self):
@@ -121,21 +141,93 @@ class DeployToolWindow(QMainWindow):
         self.pdialog.setMaximum(0)
         self.pdialog.setValue(0)
         self.pdialog.show()
+    
+    def do_change_progress_msg(self, msg: str):
+        # This can only be called from UI thread
+        # Use this object's signals to trigger this if you want to update form a different thread
+        self.pdialog.setLabelText(msg)
+    
+    def change_progress_msg(self, msg: str):
+        # Can call from any thread
+        self.change_progress_msg_sig.emit(msg)
 
     def hide_progress(self):
         self.pdialog.hide()
+
+    def tab_changed(self, idx: int):
+        if idx == 0:
+            self.populate_this_pc()
+        
 
     ############################################################################
     # This PC tab
     ############################################################################
 
+    def populate_this_pc(self):
+        # Load CoreLib version
+        path = QDir.homePath() + "/.arpirobot/corelib/version.txt"
+        if QFileInfo(path).exists():
+            file = QFile(path)
+            if file.open(QIODevice.ReadOnly):
+                instream = QTextStream(file)
+                version = instream.readLine()
+                self.ui.txt_corelib_version.setText(version)
+            else:
+                self.ui.txt_corelib_version.setText("Unknown Version")
+        else:
+            self.ui.txt_corelib_version.setText("Not Installed")
 
+    def do_update_package_installation(self, filename: str):
+        with ZipFile(filename) as zfile:
+            if "what.txt" in zfile.namelist():
+                what = zfile.read("what.txt").strip().decode()
+                dest = "{0}/.arpirobot/{1}/".format(QDir.homePath(), what)
+                self.change_progress_msg("Installing update package for component '{0}'".format(what))
+                
+                # Delete direcotry if it exists
+                if os.path.exists(dest):
+                    shutil.rmtree(dest)
+                
+                # Make empty directory
+                os.mkdir(dest)
+
+                # Extract zip to directory
+                zfile.extractall(dest)
+
+            else:
+                raise Exception(self.tr("The selected zip file is not an ArPiRobot update package."))
+
+    def handle_update_installed(self, res: Any):
+        self.hide_progress()
+        self.populate_this_pc()
+
+    def handle_update_failure(self, e: Exception):
+        self.hide_progress()
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText(str(e))
+        dialog.setWindowTitle(self.tr("Error Installing Update Package"))
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.exec()
+
+    def install_update_package(self):
+        filename = QFileDialog.getOpenFileName(self, self.tr("Open Update Package"), QDir.homePath(), self.tr("Update Packages (*.zip)"))[0]
+        if filename == "":
+            return
+
+        # Perform installation of update package on background thread
+        self.show_progress("Installing Update Package", "Parsing update package")
+        task = Task(self, self.do_update_package_installation, filename)
+        task.task_complete.connect(self.handle_update_installed)
+        task.task_exception.connect(self.handle_update_failure)
+        self.start_task(task)
+    
     ############################################################################
     # Robot connection tab
     ############################################################################
 
     def do_disconnect(self):
-        # TODO: Stop any running tasks, close dialogs, etc
+        # Hide progress dialog if shown
         self.hide_progress()
 
         # Disconnect from robot
@@ -183,8 +275,19 @@ class DeployToolWindow(QMainWindow):
             self.do_disconnect()
         else:
             # Connect to robot
-            self.show_progress("Connecting", "Connecting to the robot...")            
-            task = Task(self, self.ssh.connect, hostname="192.168.10.1", port=22, username="pi", password="arpirobot", allow_agent=False, look_for_keys=False, timeout=3, auth_timeout=3)
+            addr = self.ui.txt_address.text()
+            user = self.ui.txt_username.text()
+            pwd = self.ui.txt_password.text()
+
+            if self.ui.cbx_longer_timeouts.isChecked():
+                timeout = 8
+            else:
+                timeout = 3
+
+            self.show_progress("Connecting", "Connecting to the robot at {0}".format(addr)) 
+
+
+            task = Task(self, self.ssh.connect, hostname=addr, port=22, username=user, password=pwd, allow_agent=False, look_for_keys=False, timeout=timeout, auth_timeout=timeout)
             task.task_complete.connect(self.handle_connected)
             task.task_exception.connect(self.handle_connection_failure)
             self.start_task(task)

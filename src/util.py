@@ -132,15 +132,15 @@ class SettingsManager:
 
         self.__ROBOT_IP_KEY = "robot-address"
         self.__ROBOT_USER_KEY = "robot-user"
-        self.__ROBOT_DEF_PASS_KEY = "robot-def-pass"
         self.__THEME_KEY = "theme"
         self.__LARGE_FONTS_KEY = "larger-fonts"
+        self.__LONG_TIMEOUTS_KEY = "longer-timeouts"
 
         self.__DEFAULT_ROBOT_IP = "192.168.10.1"
         self.__DEFAULT_USER = "pi"
-        self.__DEFAULT_DEF_PASS = True
         self.__DEFAULT_THEME = "Light"
         self.__DEFAULT_LARGE_FONTS = False
+        self.__DEFAULT_LONG_TIMEOUT = False
 
         # Setup
         self.__settings = QSettings(self.__SETTING_FILE, QSettings.IniFormat)
@@ -150,12 +150,12 @@ class SettingsManager:
             self.__settings.setValue(self.__ROBOT_IP_KEY, self.__DEFAULT_ROBOT_IP)
         if self.__settings.value(self.__ROBOT_USER_KEY, None) is None:
             self.__settings.setValue(self.__ROBOT_USER_KEY, self.__DEFAULT_USER)
-        if self.__settings.setValue(self.__ROBOT_DEF_PASS_KEY, None) is None:
-            self.__settings.setValue(self.__ROBOT_DEF_PASS_KEY, self.__DEFAULT_DEF_PASS)
         if self.__settings.value(self.__THEME_KEY, None) is None:
             self.__settings.setValue(self.__THEME_KEY, self.__DEFAULT_THEME)
         if self.__settings.value(self.__LARGE_FONTS_KEY, None) is None:
             self.__settings.setValue(self.__LARGE_FONTS_KEY, self.__DEFAULT_LARGE_FONTS)
+        if self.__settings.value(self.__LONG_TIMEOUTS_KEY, None) is None:
+            self.__settings.setValue(self.__LONG_TIMEOUTS_KEY, self.__DEFAULT_LONG_TIMEOUT)
 
     @property
     def robot_address(self) -> str:
@@ -172,14 +172,6 @@ class SettingsManager:
     @robot_user.setter
     def robot_user(self, value: str):
         self.__settings.setValue(self.__ROBOT_USER_KEY, value)
-    
-    @property
-    def robot_default_pass(self) -> bool:
-        return str(self.__settings.value(self.__ROBOT_DEF_PASS_KEY, self.__DEFAULT_DEF_PASS)).lower() == "true"
-    
-    @robot_default_pass.setter
-    def robot_default_pass(self, value: bool):
-        self.__settings.setValue(self.__ROBOT_DEF_PASS_KEY, value)
 
     @property
     def theme(self) -> str:
@@ -196,6 +188,14 @@ class SettingsManager:
     @larger_fonts.setter
     def larger_fonts(self, value: bool):
         self.__settings.setValue(self.__LARGE_FONTS_KEY, value)
+    
+    @property
+    def longer_timeouts(self) -> bool:
+        return str(self.__settings.value(self.__LARGE_FONTS_KEY, self.__DEFAULT_LARGE_FONTS)).lower() == "true"
+    
+    @longer_timeouts.setter
+    def longer_timeouts(self, value: bool):
+        self.__settings.setValue(self.__LONG_TIMEOUTS_KEY, value)
 
 
 theme_manager: ThemeManager = ThemeManager()

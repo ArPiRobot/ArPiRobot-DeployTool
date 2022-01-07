@@ -69,7 +69,7 @@
             <number>3</number>
            </property>
            <item row="0" column="1">
-            <widget class="QLineEdit" name="lineEdit">
+            <widget class="QLineEdit" name="txt_corelib_version">
              <property name="readOnly">
               <bool>true</bool>
              </property>
@@ -99,7 +99,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="btn_install_update">
           <property name="text">
            <string>Install Update Package</string>
           </property>
@@ -194,7 +194,7 @@
          </widget>
         </item>
         <item row="4" column="0" colspan="2">
-         <widget class="QCheckBox" name="checkBox">
+         <widget class="QCheckBox" name="cbx_longer_timeouts">
           <property name="text">
            <string>Use Longer Timeouts (can help with poor quality connections)</string>
           </property>
