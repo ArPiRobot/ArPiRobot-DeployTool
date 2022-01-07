@@ -2,7 +2,8 @@
 import socket
 from typing import Any, Callable, List, Optional
 from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QWidget
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
 from paramiko.pkey import PKey
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
@@ -46,6 +47,7 @@ class AcceptMissingKeyPolicy(MissingHostKeyPolicy):
 class DeployToolWindow(QMainWindow):
 
     change_progress_msg_sig = Signal(str)
+    append_log_sig = Signal(str)
 
     ############################################################################
     # General UI
@@ -87,6 +89,7 @@ class DeployToolWindow(QMainWindow):
 
         # Signal / Slot setup
         self.change_progress_msg_sig.connect(self.do_change_progress_msg)
+        self.append_log_sig.connect(self.do_append_robot_log)
 
         self.ui.act_settings.triggered.connect(self.open_settings)
         self.ui.act_about.triggered.connect(self.open_about)
@@ -158,6 +161,12 @@ class DeployToolWindow(QMainWindow):
         if idx == 0:
             self.populate_this_pc()
         
+    @property
+    def command_timeout(self) -> float:
+        if self.ui.cbx_longer_timeouts.isChecked():
+            return 5
+        else:
+            return 3
 
     ############################################################################
     # This PC tab
@@ -245,6 +254,9 @@ class DeployToolWindow(QMainWindow):
         self.ssh_connected = True
         self.hide_progress()
 
+        # Start this task once when connected
+        self.populate_program_log()
+
     def handle_connection_failure(self, e: Exception):
         self.hide_progress()
         dialog = QMessageBox(parent=self)
@@ -300,6 +312,28 @@ class DeployToolWindow(QMainWindow):
     ############################################################################
     # Robot program log tab
     ############################################################################
+
+    def do_append_robot_log(self, txt: str):
+        self.ui.txt_robot_log.moveCursor(QTextCursor.End)
+        self.ui.txt_robot_log.insertPlainText(txt)
+        self.ui.txt_robot_log.moveCursor(QTextCursor.End)
+    
+    def append_robot_log(self, txt: str):
+        self.append_log_sig.emit(txt)
+
+    def do_populate_log(self):
+        _, stdout, _ = self.ssh.exec_command("tail -f -n +1 /tmp/arpirobot_program.log", timeout=None)
+        while True:
+            line = stdout.readline()
+            if line == "":
+                # EOF, therefore connection either closed or command was terminated
+                break
+            self.append_robot_log(line)
+        print("LOG DONE")
+
+    def populate_program_log(self):
+        task = Task(self, self.do_populate_log)
+        self.start_task(task)
 
 
     ############################################################################
