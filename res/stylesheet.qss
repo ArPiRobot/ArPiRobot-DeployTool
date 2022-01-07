@@ -1,0 +1,490 @@
+
+/*
+ * Note: This stylesheet cannot be directly used.
+ *       It contains several placeholder "variables"
+ *       At runtime, the stylesheet is loaded and substitutions
+ *       occur from variables mapped in a csv file (stylesheet-vars)
+ */
+
+* {
+    font-size: |default_font_size|pt;
+}
+
+p {
+    color: @text_color@;
+}
+
+.QWidget{
+	background-color: @bg_color@;
+}
+
+QDialog{
+	background-color: @bg_color@;
+}
+
+
+.QLabel{
+	color: @text_color@;
+}
+
+.QMenuBar{
+    color: @text_color@;
+	background-color: @bg_color_dark@;
+    border-bottom: 1px solid @separator_color@;
+}
+
+.QMenu{
+	color: @text_color@;
+	background-color: @bg_color_dark@;
+}
+
+.QMenu::item{
+    color: @text_color@;
+	background-color: @bg_color_dark@;
+	padding: 4px 20px 4px 10px;
+}
+
+.QMenu::item:selected{
+	background-color: @highlight_color@;
+}
+
+QMenu::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QMenu::indicator:checked {
+    image: @checkbox_checked@;
+}
+
+QMenu::indicator:unchecked {
+    image: @checkbox_unchecked@;
+}
+
+QMenu::indicator:indeterminate{
+    image: @checkbox_indet@;
+}
+
+QMenuBar::item {
+    color: @text_color@;
+    padding: 3px;
+    padding-bottom: 4px;
+    background: transparent;
+    border-bottom: 1px solid @separator_color@;
+}
+
+QMenuBar::item:selected {
+    padding-bottom: 3px;
+    border-bottom: 2px solid @highlight_color_dark@;
+}
+
+.QStatusBar{
+    color: @text_color@;
+    border-top: 1px solid @separator_color@;
+    background-color: @bg_color_dark@;
+}
+
+.QLineEdit{
+    color: @text_color@;
+    selection-color: @text_color@;
+	background-color: @bg_color_field@;
+    border: 1px solid @field_outline_color@;
+    border-radius: 3px;
+    selection-background-color: @highlight_color_dark@;
+    padding: 2px;
+}
+.QLineEdit:focus{
+    border: 1px solid @field_outline_focus_color@;
+    border-radius: 3px;
+}
+
+.QTextEdit{
+    color: @text_color@;
+    selection-color: @text_color@;
+	background-color: @bg_color_field@;
+    border: 1px solid @field_outline_color@;
+    border-radius: 3px;
+    selection-background-color: @highlight_color_dark@;
+    padding: 2px;
+}
+.QTextEdit:focus{
+    border: 1px solid @field_outline_focus_color@;
+    border-radius: 3px;
+}
+
+.QTextBrowser{
+    color: @text_color@;
+    selection-color: @text_color@;
+	background-color: @bg_color_field@;
+    border: 1px solid @field_outline_color@;
+    border-radius: 3px;
+    selection-background-color: @highlight_color_dark@;
+    padding: 2px;
+}
+.QTextBrowser:focus{
+    border: 1px solid @field_outline_focus_color@;
+    border-radius: 3px;
+}
+
+.QPlainTextEdit{
+    color: @text_color@;
+    selection-color: @text_color@;
+	background-color: @bg_color_field@;
+    border: 1px solid @field_outline_color@;
+    border-radius: 3px;
+    selection-background-color: @highlight_color_dark@;
+    padding: 2px;
+}
+.QPlainTextEdit:focus{
+    border: 1px solid @field_outline_focus_color@;
+    border-radius: 3px;
+}
+
+.QProgressBar{
+    color: @text_color@;
+    background-color: @bg_color_field@;
+    border-radius: 3px;
+}
+.QProgressBar::chunk{
+	background-color: @highlight_color_dark@;
+    border-radius: 3px;
+}
+
+QGroupBox {
+    border: 1px solid @groupbox_border_color@;
+    border-radius: 3px;
+    margin-top: 7px;
+    padding: 5px;
+    padding-top: 1em;
+}
+QGroupBox::title {
+    color: @text_color@;
+    subcontrol-origin: margin;
+    left: 4px;
+    top: 0px;
+}
+
+QTabWidget::pane{
+	border: 2px solid @separator_color@;
+    border-radius: 3px;
+}
+QTabWidget::tab-bar {
+    top: 1px;
+}
+QTabBar::tab {
+    color: @text_color@;
+    background-color: @bg_color_field@;
+    border: 1px solid @field_outline_color@;
+    border-bottom-color: @separator_color@;
+    border-bottom-width: 1px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-width: 8ex;
+    padding: 2px;
+}
+
+QTabBar::tab:hover {
+    background-color: @bg_hover_color@;
+}
+QTabBar::tab:selected {
+    border-color: @separator_color@;
+    background-color: @bg_color_field@;
+}
+
+QTabBar::tab:!selected {
+    margin-top: 3px;
+}
+
+QTabBar::tab:disabled {
+    color: @text_color_disabled@;
+    background-color: @bg_color_field_disabled@;
+}
+
+QPushButton{
+	color: @text_color@;
+    background-color: @bg_color_field@;
+    border: 1px solid @field_outline_color@;
+    border-radius: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+QPushButton:hover {
+    background-color: @bg_hover_color@;
+}
+
+QPushButton:pressed, QPushButton:checked {
+    background-color: @bg_color_press@;
+}
+
+QListView{
+    color: @text_color@;
+    background-color: @bg_color_field@;
+    border: 2px inset @field_outline_color@;
+    border-radius: 1px;
+}
+
+QListView::item{
+    background : @bg_color_field@;
+    color : @text_color@;
+}
+
+QListView::item:selected{
+    background : @highlight_color@;
+    color: @text_color@;
+}
+
+QListView::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QListView::indicator:unchecked {
+    image: @checkbox_unchecked@;
+}
+
+QListView::indicator:checked {
+    image: @checkbox_checked@;
+}
+
+QListView::indicator:indeterminate {
+    image: @checkbox_indet@;
+}
+
+QScrollBar:vertical {
+    border: 2px solid @separator_color@;
+    background: @separator_color@;
+    width: 15px;
+    margin: 22px 0 22px 0;
+}
+QScrollBar::handle:vertical {
+    background: @scrollbar_color@;
+    min-height: 20px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    border-radius: 1px;
+}
+QScrollBar::add-line:vertical {
+    border: 2px solid @separator_color@;
+    background: @scrollbar_color@;
+    height: 20px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+QScrollBar::sub-line:vertical {
+    border: 2px solid @separator_color@;
+    background: @scrollbar_color@;
+    height: 20px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+QScrollBar::up-arrow:vertical{
+	image: @scrollbar_up@;
+    height: 4px;
+    width: 8px;
+}
+QScrollBar::down-arrow:vertical {
+    image: @scrollbar_down@;
+    height: 4px;
+    width: 8px;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QScrollBar:horizontal {
+    border: 2px solid @separator_color@;
+    background: @separator_color@;
+    height: 15px;
+    margin: 0px 20px 0 20px;
+}
+QScrollBar::handle:horizontal {
+    background: @scrollbar_color@;
+    min-width: 20px;
+    margin-left: 1px;
+    margin-right: 1px;
+    border-radius: 1px;
+}
+QScrollBar::add-line:horizontal {
+    border: 2px solid @separator_color@;
+    background: @scrollbar_color@;
+    width: 20px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal {
+    border: 2px solid @separator_color@;
+    background: @scrollbar_color@;
+    width: 20px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar:left-arrow:horizontal{
+    image: @scrollbar_left@;
+    height: 8px;
+    width: 4px;
+}
+
+QScrollBar::right-arrow:horizontal {
+    image: @scrollbar_right@;
+    height: 8px;
+    width: 4px;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+QComboBox {
+     background-color: @bg_color_field@;
+     color: @text_color@;
+}
+
+QComboBox:item:selected {
+    border-top: 0;
+	border-left: 0;
+	border-bottom: 0;
+	border-right: 0;
+    background-color: @highlight_color@;
+}
+
+QCheckBox {
+    color: @text_color@;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: @checkbox_unchecked@;
+}
+
+QCheckBox::indicator:checked {
+    image: @checkbox_checked@;
+}
+
+QCheckBox::indicator:indeterminate{
+    image: @checkbox_indet@;
+}
+
+
+
+/******************************************************************************
+ * Styles for specific UI elements (app specific)
+ ******************************************************************************/
+
+/* Custom UI Element for Indicators Panel */
+IndicatorWidget{
+    /*border: 1px solid @separator_color@;
+    border-radius: 2px;*/
+}
+
+IndicatorWidget:focus{
+    border: 1px solid @separator_color@;
+    border-radius: 2px;
+}
+
+
+/* Disable Button */
+
+QPushButton#btn_disable{
+	color: @disable_btn_text_color@;
+    border-style: outset;
+    border-width: 2px;
+    background-color: @bg_color_field@;
+}
+
+QPushButton:hover#btn_disable{
+    background-color: @bg_color_field@;
+}
+
+QPushButton:checked#btn_disable{
+	border-style: inset;
+    background-color: @bg_color_press@;
+}
+
+/* Enable Button */
+
+QPushButton#btn_enable{
+	color: @enable_btn_text_color@;
+    border-style: outset;
+    border-width: 2px;
+    background-color: @bg_color_field@;
+}
+
+QPushButton:hover#btn_enable{
+    background-color: @bg_color_field@;
+}
+
+QPushButton:checked#btn_enable{
+	border-style: inset;
+    background-color: @bg_color_press@;
+}
+
+/* Settings Button */
+
+QPushButton#btn_settings{
+    icon: @settings_icon@;
+}
+
+
+/* Network status indicator */
+QWidget#pnl_net_bg{
+	border: 1px solid @text_color@;
+    border-radius: 3px;
+}
+
+QWidget#pnl_net_bg_red{
+	border: 1px solid @text_color@;
+    border-radius: 3px;
+    background-color: @status_red_color@;
+}
+
+QWidget#pnl_net_bg_green{
+	border: 1px solid @text_color@;
+    border-radius: 3px;
+    background-color: @status_green_color@;
+}
+
+/* Program Status Indicator */
+QWidget#pnl_program_bg{
+	border: 1px solid @text_color@;
+    border-radius: 3px;
+}
+
+QWidget#pnl_program_bg_red{
+	border: 1px solid @text_color@;
+    border-radius: 3px;
+    background-color: @status_red_color@;
+}
+
+QWidget#pnl_program_bg_green{
+	border: 1px solid @text_color@;
+    border-radius: 3px;
+    background-color: @status_green_color@;
+}
+
+/* Battery indicator background */
+QWidget#pnl_bat_bg_red{
+    background-color: @battery_red_color@;
+    border-radius: 3px;
+}
+QWidget#pnl_bat_bg_orange{
+    background-color: @battery_orange_color@;
+    border-radius: 3px;
+}
+QWidget#pnl_bat_bg_yellow{
+    background-color: @battery_yellow_color@;
+    border-radius: 3px;
+}
+QWidget#pnl_bat_bg_green{
+    background-color: @battery_green_color@;
+    border-radius: 3px;
+}
