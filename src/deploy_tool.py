@@ -437,7 +437,11 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_proj_deploy.setEnabled(valid)
     
     def choose_proj_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, self.tr("Open Project Folder"), QDir.homePath())
+        if settings_manager.last_proj_folder != "" and os.path.exists(settings_manager.last_proj_folder):
+            start_dir = settings_manager.last_proj_folder
+        else:
+            start_dir = QDir.homePath()
+        folder = QFileDialog.getExistingDirectory(self, self.tr("Open Project Folder"), start_dir)
         if(folder != ""):
             settings_manager.last_proj_folder = folder
             self.ui.txt_proj_folder.setText(folder)
