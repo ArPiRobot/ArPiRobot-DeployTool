@@ -379,13 +379,16 @@
            <item>
             <widget class="QProgressBar" name="pbar_cpu_usage">
              <property name="maximum">
-              <number>0</number>
+              <number>100</number>
              </property>
              <property name="value">
               <number>0</number>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
+             </property>
+             <property name="format">
+              <string/>
              </property>
             </widget>
            </item>
@@ -399,7 +402,7 @@
            <item>
             <widget class="QProgressBar" name="pbar_mem_usage">
              <property name="maximum">
-              <number>0</number>
+              <number>999999</number>
              </property>
              <property name="value">
               <number>0</number>
@@ -408,7 +411,7 @@
               <set>Qt::AlignCenter</set>
              </property>
              <property name="format">
-              <string>%v / %m</string>
+              <string/>
              </property>
             </widget>
            </item>

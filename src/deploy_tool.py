@@ -2,19 +2,27 @@
 import socket
 from typing import Any, Callable, List, Optional
 from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtGui import QTextCursor
+from PySide6.QtGui import QGuiApplication, QTextCursor
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
 from paramiko.pkey import PKey
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
 from paramiko.client import SSHClient, MissingHostKeyPolicy
+from paramiko.ssh_exception import SSHException
 from util import settings_manager, theme_manager
 from zipfile import ZipFile
 import time
 import os
 import shutil
+import traceback
+from enum import Enum, auto
 
+
+class WritableState(Enum):
+    Unknown = auto()
+    Readonly = auto()
+    ReadWrite = auto()
 
 class Task(QRunnable, QObject):
     task_complete = Signal(object)
@@ -48,9 +56,11 @@ class DeployToolWindow(QMainWindow):
 
     change_progress_msg_sig = Signal(str)
     append_log_sig = Signal(str)
+    set_versions_sig = Signal(str, str, str)
+    update_status_sig = Signal(float, int, int, WritableState)
 
     ############################################################################
-    # General UI
+    # General UI & Helper functions
     ############################################################################
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
@@ -90,6 +100,8 @@ class DeployToolWindow(QMainWindow):
         # Signal / Slot setup
         self.change_progress_msg_sig.connect(self.do_change_progress_msg)
         self.append_log_sig.connect(self.do_append_robot_log)
+        self.set_versions_sig.connect(self.do_set_versions)
+        self.update_status_sig.connect(self.do_update_status)
 
         self.ui.act_settings.triggered.connect(self.open_settings)
         self.ui.act_about.triggered.connect(self.open_about)
@@ -101,6 +113,14 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_install_update.clicked.connect(self.install_update_package)
 
         self.ui.btn_connect.clicked.connect(self.toggle_connection)
+
+        self.ui.btn_copy_log.clicked.connect(self.copy_log)
+
+        self.ui.btn_shutdown.clicked.connect(self.shutdown_robot)
+        self.ui.btn_reboot.clicked.connect(self.reboot_robot)
+        self.ui.btn_restart_program.clicked.connect(self.restart_robot_program)
+        self.ui.btn_make_writable.clicked.connect(self.make_robot_writable)
+        self.ui.btn_readonly.clicked.connect(self.make_robot_readonly)
 
         # Startup
         self.disable_robot_tabs()
@@ -168,6 +188,7 @@ class DeployToolWindow(QMainWindow):
         else:
             return 3
 
+
     ############################################################################
     # This PC tab
     ############################################################################
@@ -231,6 +252,7 @@ class DeployToolWindow(QMainWindow):
         task.task_exception.connect(self.handle_update_failure)
         self.start_task(task)
     
+
     ############################################################################
     # Robot connection tab
     ############################################################################
@@ -254,8 +276,21 @@ class DeployToolWindow(QMainWindow):
         self.ssh_connected = True
         self.hide_progress()
 
-        # Start this task once when connected
+        # Don't keep data from old connections
+        self.ui.pbar_cpu_usage.setValue(0)
+        self.ui.pbar_cpu_usage.setFormat(self.tr("Unknown"))
+        self.ui.pbar_mem_usage.setValue(0)
+        self.ui.pbar_mem_usage.setFormat(self.tr("Unknown"))
+        self.ui.lbl_readonly_status.setText(self.tr("Unknown"))
+        self.ui.pnl_readonly_status.setObjectName("unknown")
+        self.ui.pnl_readonly_status.style().unpolish(self.ui.pnl_readonly_status)
+        self.ui.pnl_readonly_status.style().polish(self.ui.pnl_readonly_status)
+
+
+        # Start these tasks once connected
+        # They run until disconnect
         self.populate_program_log()
+        self.populate_robot_status()
 
     def handle_connection_failure(self, e: Exception):
         self.hide_progress()
@@ -304,9 +339,24 @@ class DeployToolWindow(QMainWindow):
             task.task_exception.connect(self.handle_connection_failure)
             self.start_task(task)
 
+
     ############################################################################
     # Robot program tab
     ############################################################################
+
+    def do_writable_check(self) -> WritableState:
+        try:
+            _, stdout, _ = self.ssh.exec_command("mount | grep \"on / \"")
+        except SSHException:
+            print(traceback.format_exc())
+            return WritableState.Unknown
+        line = stdout.readline()
+        if line.find("ro") > -1:
+            return WritableState.Readonly
+        elif line.find("rw") > -1:
+            return WritableState.ReadWrite
+        else:
+            return WritableState.Unknown
 
 
     ############################################################################
@@ -322,23 +372,139 @@ class DeployToolWindow(QMainWindow):
         self.append_log_sig.emit(txt)
 
     def do_populate_log(self):
-        _, stdout, _ = self.ssh.exec_command("tail -f -n +1 /tmp/arpirobot_program.log", timeout=None)
-        while True:
-            line = stdout.readline()
-            if line == "":
-                # EOF, therefore connection either closed or command was terminated
-                break
-            self.append_robot_log(line)
-        print("LOG DONE")
+        while self.ssh_connected:
+            # Outter loop ensures that if this command is killed (for any reason), 
+            # but SSH is still active, logging continues to work
+            try:
+                _, stdout, _ = self.ssh.exec_command("tail -f -n +1 /tmp/arpirobot_program.log", timeout=None)
+                while self.ssh_connected:
+                    line = stdout.readline()
+                    if line == "":
+                        # EOF, therefore connection either closed or command was terminated
+                        break
+                    self.append_robot_log(line)
+            except SSHException:
+                print(traceback.format_exc())
 
     def populate_program_log(self):
         task = Task(self, self.do_populate_log)
         self.start_task(task)
 
+    def copy_log(self):
+        QGuiApplication.clipboard().setText(self.ui.txt_robot_log.toPlainText())
+
 
     ############################################################################
     # Robot status tab
     ############################################################################
+
+    def do_set_versions(self, img_ver: str, py_ver: str, tool_ver: str):
+        self.ui.txt_image_version.setText(img_ver)
+        self.ui.txt_python_version.setText(py_ver)
+        self.ui.txt_tools_version.setText(tool_ver)
+
+    def set_versions(self, img_ver: str, py_ver: str, tool_ver: str):
+        self.set_versions_sig.emit(img_ver, py_ver, tool_ver)
+
+    def do_update_status(self, cpu: float, mem_used: int, mem_avail: int, writable: WritableState):
+        self.ui.pbar_cpu_usage.setValue(int(100.0 - cpu))
+        self.ui.pbar_cpu_usage.setFormat("{0:.2f} %".format(100.0 - cpu))
+        self.ui.pbar_mem_usage.setValue(mem_used)
+        self.ui.pbar_mem_usage.setMaximum(mem_avail)
+        self.ui.pbar_mem_usage.setFormat("%v / %m kB")
+        self.ui.lbl_readonly_status.setText(self.tr(writable.name))
+        self.ui.pnl_readonly_status.setObjectName(writable.name.lower())
+        self.ui.pnl_readonly_status.style().unpolish(self.ui.pnl_readonly_status)
+        self.ui.pnl_readonly_status.style().polish(self.ui.pnl_readonly_status)
+
+    def update_status(self, cpu: float, mem_used: int, mem_avail: int, writable: WritableState):
+        self.update_status_sig.emit(cpu, mem_used, mem_avail, writable)
+
+    def do_populate_status(self):
+        # Read versions once after connecting
+        _, stdout, _ = self.ssh.exec_command("dt-getversions.sh", timeout=self.command_timeout)
+        img_version = stdout.readline().strip()
+        py_version = stdout.readline().strip()
+        tool_version = stdout.readline().strip()
+        self.set_versions(img_version, py_version, tool_version)
+
+        # Periodically read CPU usage, memory usage, and readonly status
+        while self.ssh_connected:
+            try:
+                _, stdout_cpu, _ = self.ssh.exec_command("dt-getidlecpu.sh", timeout=self.command_timeout)
+                _, stdout_mem, _ = self.ssh.exec_command("dt-getmeminfo.sh", timeout=self.command_timeout)
+                
+                writable_state = self.do_writable_check()
+
+                try:
+                    cpu = float(stdout_cpu.readline())
+                except:
+                    cpu = 0
+                
+                try:
+                    mem_used = int(stdout_mem.readline())
+                    mem_avail = int(stdout_mem.readline())
+                except:
+                    mem_used = 0
+                    mem_avail = 0
+                
+                self.update_status(cpu, mem_used, mem_avail, writable_state)
+                time.sleep(1)
+            except SSHException:
+                pass
+
+    def populate_robot_status(self):
+        task = Task(self, self.do_populate_status)
+        self.start_task(task)
+
+    def shutdown_robot(self):
+        _, stdout, _ = self.ssh.exec_command("nohup dt-shutdown.sh > /dev/null 2>&1 &")
+        stdout.channel.recv_exit_status()
+    
+    def reboot_robot(self):
+        _, stdout, _ = self.ssh.exec_command("nohup dt-reboot.sh > /dev/null 2>&1 &")
+        stdout.channel.recv_exit_status()
+    
+    def do_restart_program(self):
+        try:
+            _, stdout, _ = self.ssh.exec_command("dt-stop_program.sh", timeout=10)
+            stdout.channel.recv_exit_status()
+        except SSHException:
+            raise Exception("Failed to stop robot program.")
+        self.change_progress_msg(self.tr("Starting robot program..."))
+        try:
+            _, stdout, _ = self.ssh.exec_command("dt-start_program.sh", timeout=10)
+            stdout.channel.recv_exit_status()
+        except SSHException:
+            raise Exception(self.tr("Failed to stop robot program."))
+
+    def restart_program_success(self, res: Any):
+        self.hide_progress()
+    
+    def restart_program_fail(self, e: Exception):
+        self.hide_progress()
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText(str(e))
+        dialog.setWindowTitle(self.tr("Restart Robot Program Failed"))
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.exec()
+
+
+    def restart_robot_program(self):
+        self.show_progress(self.tr("Restarting Robot Program"), self.tr("Stopping robot program..."))
+        task = Task(self, self.do_restart_program)
+        task.task_complete.connect(self.restart_program_success)
+        task.task_exception.connect(self.restart_program_fail)
+        self.start_task(task)
+
+    def make_robot_writable(self):
+        _, stdout, _ = self.ssh.exec_command("nohup dt-rw.sh > /dev/null 2>&1 &")
+        stdout.channel.recv_exit_status()
+    
+    def make_robot_readonly(self):
+        _, stdout, _ = self.ssh.exec_command("nohup dt-ro.sh > /dev/null 2>&1 &")
+        stdout.channel.recv_exit_status()
 
 
     ############################################################################

@@ -135,12 +135,14 @@ class SettingsManager:
         self.__THEME_KEY = "theme"
         self.__LARGE_FONTS_KEY = "larger-fonts"
         self.__LONG_TIMEOUTS_KEY = "longer-timeouts"
+        self.__LAST_PROJ_FOLDER_KEY = "proj-folder"
 
         self.__DEFAULT_ROBOT_IP = "192.168.10.1"
         self.__DEFAULT_USER = "pi"
         self.__DEFAULT_THEME = "Light"
         self.__DEFAULT_LARGE_FONTS = False
         self.__DEFAULT_LONG_TIMEOUT = False
+        self.__DEFAULT_PROJ_FOLDER = ""
 
         # Setup
         self.__settings = QSettings(self.__SETTING_FILE, QSettings.IniFormat)
@@ -156,6 +158,8 @@ class SettingsManager:
             self.__settings.setValue(self.__LARGE_FONTS_KEY, self.__DEFAULT_LARGE_FONTS)
         if self.__settings.value(self.__LONG_TIMEOUTS_KEY, None) is None:
             self.__settings.setValue(self.__LONG_TIMEOUTS_KEY, self.__DEFAULT_LONG_TIMEOUT)
+        if self.__settings.value(self.__LAST_PROJ_FOLDER_KEY, None) is None:
+            self.__settings.setValue(self.__LAST_PROJ_FOLDER_KEY, self.__DEFAULT_PROJ_FOLDER)
 
     @property
     def robot_address(self) -> str:
@@ -196,6 +200,14 @@ class SettingsManager:
     @longer_timeouts.setter
     def longer_timeouts(self, value: bool):
         self.__settings.setValue(self.__LONG_TIMEOUTS_KEY, value)
+    
+    @property
+    def last_proj_folder(self) -> str:
+        return self.__settings.value(self.__LAST_PROJ_FOLDER_KEY, self.__DEFAULT_PROJ_FOLDER)
+    
+    @last_proj_folder.setter
+    def last_proj_folder(self, value: str):
+        self.__settings.setValue(self.__LAST_PROJ_FOLDER_KEY, value)
 
 
 theme_manager: ThemeManager = ThemeManager()
