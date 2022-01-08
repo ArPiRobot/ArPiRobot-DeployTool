@@ -229,7 +229,7 @@
             <number>3</number>
            </property>
            <item>
-            <widget class="QLineEdit" name="lineEdit_2">
+            <widget class="QLineEdit" name="txt_proj_folder">
              <property name="inputMask">
               <string notr="true"/>
              </property>
@@ -250,6 +250,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="btn_proj_deploy">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Deploy to Robot</string>
           </property>

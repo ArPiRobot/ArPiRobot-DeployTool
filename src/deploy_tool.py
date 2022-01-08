@@ -1,10 +1,13 @@
 
 import socket
+from threading import local
 from typing import Any, Callable, List, Optional
 from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
 from PySide6.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
 from paramiko.pkey import PKey
+from paramiko.sftp import SFTPError
+from paramiko.sftp_client import SFTPClient
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
@@ -15,6 +18,10 @@ from zipfile import ZipFile
 import time
 import os
 import shutil
+import json
+import pathlib
+import fnmatch
+import glob
 import traceback
 from enum import Enum, auto
 
@@ -174,6 +181,9 @@ class DeployToolWindow(QMainWindow):
 
         self.ui.btn_connect.clicked.connect(self.toggle_connection)
 
+        self.ui.btn_proj_browse.clicked.connect(self.choose_proj_folder)
+        self.ui.btn_proj_deploy.clicked.connect(self.deploy_program)
+
         self.ui.btn_copy_log.clicked.connect(self.copy_log)
 
         self.ui.btn_shutdown.clicked.connect(self.shutdown_robot)
@@ -248,6 +258,8 @@ class DeployToolWindow(QMainWindow):
     def tab_changed(self, idx: int):
         if idx == 0:
             self.populate_this_pc()
+        elif idx == 2:
+            self.populate_program_tab()
         elif idx == 5:
             self.populate_network_settings()
         
@@ -414,6 +426,23 @@ class DeployToolWindow(QMainWindow):
     # Robot program tab
     ############################################################################
 
+    def populate_program_tab(self):
+        self.ui.txt_proj_folder.setText(settings_manager.last_proj_folder)
+        self.validate_proj_folder()
+
+    def validate_proj_folder(self):
+        valid = os.path.exists(settings_manager.last_proj_folder) and os.path.isdir(settings_manager.last_proj_folder)
+        if valid:
+            valid = os.path.exists(os.path.join(settings_manager.last_proj_folder, "arpirobot-proj.json"))
+        self.ui.btn_proj_deploy.setEnabled(valid)
+    
+    def choose_proj_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, self.tr("Open Project Folder"), QDir.homePath())
+        if(folder != ""):
+            settings_manager.last_proj_folder = folder
+            self.ui.txt_proj_folder.setText(folder)
+            self.validate_proj_folder()
+
     def do_writable_check(self) -> WritableState:
         try:
             _, stdout, _ = self.ssh.exec_command("mount | grep \"on / \"")
@@ -426,6 +455,159 @@ class DeployToolWindow(QMainWindow):
             return WritableState.ReadWrite
         else:
             return WritableState.Unknown
+
+    def custom_glob(self, expression: str, base_path: str, old_dt_compat: bool) -> List[str]:
+        # Old deploy tool treated src/** as src/**/* would be treated (more or less)
+        if old_dt_compat and expression.endswith("**"):
+            expression = "{0}/*".format(expression)
+
+        matches = []
+        base_path_obj = pathlib.Path(base_path)
+        for match in base_path_obj.glob(expression):
+            matches.append(str(match))
+        return matches
+
+    def sftp_upload_file(self, sftp: SFTPClient, local_file: str, remote_dest: str):
+        # Note: remote_dest is a directory and must exist
+        sftp.put(local_file, "{0}/{1}".format(remote_dest, os.path.basename(local_file)))
+
+    def sftp_mkdir_recursive(self, sftp: SFTPClient, remote_directory: str):
+        remote_directory.replace("\\", "/")
+        if remote_directory == '/':
+            sftp.chdir('/')
+            return
+        if remote_directory == '':
+            return
+        try:
+            sftp.chdir(remote_directory)
+        except IOError:
+            dirname, basename = os.path.split(remote_directory.rstrip('/'))
+            self.sftp_mkdir_recursive(sftp, dirname)
+            sftp.mkdir(basename)
+            sftp.chdir(basename)
+            return True
+
+    def sftp_upload_directory(self, sftp: SFTPClient, local_dir: str, remote_dest: str):
+        # Note: remote_dest is a directory and must exist
+        # The local directory is recursively uploaded to the remote location
+
+        # Use only forward slashes. Remove trailing slash as it messes up os.path.basename
+        local_dir = local_dir.replace("\\", "/").rstrip("/")
+
+        remote_dest = "{0}/{1}".format(remote_dest, os.path.basename(local_dir))
+
+        # Copy each item in this directory recursively
+        for root, dirs, files in os.walk(local_dir):
+            for file in files:
+                local_file = "{0}/{1}".format(root, file).replace("\\", "/")
+                remote_file = local_file.replace(local_dir, remote_dest)
+                self.sftp_mkdir_recursive(sftp, os.path.dirname(remote_file))
+                sftp.put(local_file, remote_file)
+            for dir in dirs:
+                local_file = os.path.join(root, dir).replace("\\", "/")
+                remote_file = local_file.replace(local_dir, remote_dest)
+                self.sftp_upload_directory(sftp, local_file, os.path.dirname(remote_file))   
+
+    def do_deploy_program(self, proj_folder: str):
+
+        self.change_progress_msg(self.tr("Ensuring robot filesystem is writable..."))
+        orig_state = self.do_writable_check()
+        if(orig_state != WritableState.ReadWrite):
+            self.make_robot_writable()
+        
+        self.change_progress_msg(self.tr("Stopping old robot program..."))
+        _, stdout, _ = self.ssh.exec_command("dt-stop_program.sh", timeout=self.command_timeout)
+        res = stdout.channel.recv_exit_status()
+        if res != 0:
+            raise Exception(self.tr("Failed to stop old program."))
+
+        self.change_progress_msg(self.tr("Deleting old project..."))
+        _, stdout, _ = self.ssh.exec_command("dt-delete_program.sh", timeout=self.command_timeout)
+        res = stdout.channel.recv_exit_status()
+        if res != 0:
+            raise Exception(self.tr("Failed to delete old program."))
+
+        self.change_progress_msg(self.tr("Uploading new project to robot..."))
+
+        # Do Deploy
+        sftp = self.ssh.open_sftp()
+    
+        # Make sure project file is of a known version
+        all_files: List[str] = []
+        try:
+            with open(os.path.join(proj_folder, "arpirobot-proj.json")) as fp:
+                proj_file = json.load(fp)
+        except:
+            raise Exception(self.tr("Unable to open project file."))
+        
+        if "version" not in proj_file:
+            raise Exception(self.tr("Invalid project version. Update the deploy tool and try again."))
+        elif proj_file["version"] == 2 or proj_file["version"] == 1:
+            if "deployFiles" not in proj_file or "coreLibFiles" not in proj_file:
+                raise Exception("Project file is invalid. Make sure all required sections exist")
+            
+            old_dt_compat = proj_file["version"] == 1
+
+            for expression in proj_file["deployFiles"]:
+                all_files.extend(self.custom_glob(expression, proj_folder, old_dt_compat))
+            for expression in proj_file["coreLibFiles"]:
+                all_files.extend(self.custom_glob(expression, os.path.join(QDir.homePath(), ".arpirobot", "corelib"), old_dt_compat))
+
+        else:
+            raise Exception(self.tr("Invalid project version. Update the deploy tool and try again."))
+
+        # Make empty directory to upload to exists
+        _, stdout, _ = self.ssh.exec_command("rm -rf /tmp/robot_proj/;mkdir -p /tmp/robot_proj")
+        res = stdout.channel.recv_exit_status()
+
+        # Upload each item to the remote directory using sftp
+        try:
+            for file in all_files:               
+                if not os.path.isdir(file):
+                    self.sftp_upload_file(sftp, file, "/tmp/robot_proj/")
+                else:
+                    self.sftp_upload_directory(sftp, file, "/tmp/robot_proj/")
+        except SFTPError as e:
+            print(str(e))
+            raise Exception(self.tr("Unable to copy files to the robot."))
+
+        sftp.close()
+
+        _, stdout, _ = self.ssh.exec_command("dt-update_program.sh /tmp/robot_proj", timeout=self.command_timeout)
+        res = stdout.channel.recv_exit_status()
+        if res != 0:
+            raise Exception(self.tr("Unable to update program on the robot."))
+
+        self.change_progress_msg("Starting new robot program...")
+        _, stdout, _ = self.ssh.exec_command("dt-start_program.sh", timeout=self.command_timeout)
+        res = stdout.channel.recv_exit_status()
+
+        if res != 0:
+            raise Exception(self.tr("Failed to start new program on robot."))
+
+        self.change_progress_msg("Restoring filesystem state...")
+        # Restore readonly status
+        if(orig_state == WritableState.Readonly):
+            self.make_robot_readonly()
+
+    def deploy_complete(self, res: Any):
+        self.hide_progress()
+    
+    def deploy_failed(self, e: Exception):
+        self.hide_progress()
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText(str(e))
+        dialog.setWindowTitle(self.tr("Deploy Program Failed"))
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.exec()
+
+    def deploy_program(self):
+        self.show_progress(self.tr("Deploying Program"), self.tr("Preparing to deploy program to robot..."))
+        task = Task(self, self.do_deploy_program, self.ui.txt_proj_folder.text())
+        task.task_complete.connect(self.deploy_complete)
+        task.task_exception.connect(self.deploy_failed)
+        self.start_task(task)
 
 
     ############################################################################
@@ -612,16 +794,14 @@ class DeployToolWindow(QMainWindow):
     def do_apply_network_settings(self, ssid: str, psk: str, country: str, channel: int):
         orig_state = self.do_writable_check()
         if orig_state != WritableState.ReadWrite:
-            _, stdout, _ = self.ssh.exec_command("dt-rw.sh", timeout=self.command_timeout)
-            stdout.channel.recv_exit_status()
+            self.make_robot_writable()
 
         _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}'  > /dev/null 2>&1".format(ssid, psk, country, channel),
                 timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
 
         if orig_state == WritableState.Readonly:
-            _, stdout, _ = self.ssh.exec_command("dt-ro.sh", timeout=self.command_timeout)
-            stdout.channel.recv_exit_status()
+            self.make_robot_readonly()
 
     def apply_network_settings(self):
         ssid = self.ui.txt_wifi_ssid.text()
@@ -684,15 +864,13 @@ class DeployToolWindow(QMainWindow):
     def do_apply_hostname(self, hostname: str):
         orig_state = self.do_writable_check()
         if orig_state != WritableState.ReadWrite:
-            _, stdout, _ = self.ssh.exec_command("dt-rw.sh", timeout=self.command_timeout)
-            stdout.channel.recv_exit_status()
+            self.make_robot_writable()
         
         _, stdout, _ = self.ssh.exec_command("nohup dt-hostname.sh '{0}' > /dev/null 2>&1".format(hostname),timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
 
         if orig_state == WritableState.Readonly:
-            _, stdout, _ = self.ssh.exec_command("dt-ro.sh", timeout=self.command_timeout)
-            stdout.channel.recv_exit_status()
+            self.make_robot_readonly()
 
     def apply_hostname(self):
         self.show_progress(self.tr("Changing Hostname"), self.tr("Changing robot hostname..."))

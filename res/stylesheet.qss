@@ -219,6 +219,11 @@ QPushButton:pressed, QPushButton:checked {
     background-color: @bg_color_press@;
 }
 
+QPushButton:disabled {
+    color: @text_color_disabled@;
+    background-color: @bg_color_field_disabled@;
+}
+
 QListView{
     color: @text_color@;
     background-color: @bg_color_field@;
