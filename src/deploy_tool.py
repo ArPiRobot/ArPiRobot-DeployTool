@@ -1,8 +1,8 @@
 
 import socket
 from typing import Any, Callable, List, Optional
-from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtGui import QGuiApplication, QTextCursor
+from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
+from PySide6.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
 from paramiko.pkey import PKey
 from ui_deploy_tool import Ui_DeployTool
@@ -10,7 +10,7 @@ from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
 from paramiko.client import SSHClient, MissingHostKeyPolicy
 from paramiko.ssh_exception import SSHException
-from util import settings_manager, theme_manager
+from util import settings_manager, theme_manager, WIFI_COUNTRY_CODES
 from zipfile import ZipFile
 import time
 import os
@@ -23,6 +23,7 @@ class WritableState(Enum):
     Unknown = auto()
     Readonly = auto()
     ReadWrite = auto()
+
 
 class Task(QRunnable, QObject):
     task_complete = Signal(object)
@@ -41,15 +42,67 @@ class Task(QRunnable, QObject):
             res = self.__target(*self.__args, **self.__kwargs)
             self.task_complete.emit(res)
         except Exception as e:
-            self.task_exception.emit(e)
+            try:
+                self.task_exception.emit(e)
+            except:
+                pass
 
 
-# Used to ignore ssh keys when connecting
-# All robots use 192.168.10.1 as their address (unless changed)
-# As such, enforcing host keys will only cause issues
 class AcceptMissingKeyPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client: SSHClient, hostname: str, key: PKey):
         pass
+
+
+class WifiPassValidator(QRegularExpressionValidator):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setRegularExpression(QRegularExpression(r"[^\x20-\x7E]+$"))
+
+
+class WifiSsidValidator(QValidator):
+    def __init__(self, parent: Optional[QObject] = None):
+        super().__init__(parent=parent)
+    
+    def validate(self, input: str, pos: int) -> object:
+        if len(input) > 32:
+            return QRegularExpressionValidator.Invalid
+        input_bytes = list(input.encode())
+        for b in input_bytes:
+            # Printable ASCII range
+            if b < 32 or b > 126:
+                return QValidator.Invalid
+            # Disallowed in printable ASCII range
+            # ? " $ [ \ ] +
+            if b in [63, 34, 36, 91, 93, 43]:
+                return QValidator.Invalid
+        return QValidator.Acceptable
+
+
+class WifiPskValidator(QValidator):
+    def __init__(self, parent: Optional[QObject] = None):
+        super().__init__(parent=parent)
+    
+    def validate(self, input: str, pos: int) -> object:
+        if len(input) > 63:
+            return QRegularExpressionValidator.Invalid
+        input_bytes = list(input.encode())
+        for b in input_bytes:
+            # Printable ASCII range
+            if b < 32 or b > 126:
+                return QValidator.Invalid
+        return QValidator.Acceptable
+
+
+class WifiCountryValidator(QRegularExpressionValidator):
+    def __init__(self, parent: Optional[QObject] = None) -> None:
+        super().__init__(parent=parent)
+        self.setRegularExpression(QRegularExpression("[A-Z]*"))
+    
+    def validate(self, input: str, pos: int) -> object:
+        if len(input) > 2:
+            return QRegularExpressionValidator.Invalid
+        return super().validate(input, pos)
+        
 
 
 class DeployToolWindow(QMainWindow):
@@ -58,6 +111,7 @@ class DeployToolWindow(QMainWindow):
     append_log_sig = Signal(str)
     set_versions_sig = Signal(str, str, str)
     update_status_sig = Signal(float, int, int, WritableState)
+    update_net_info_sig = Signal(str, str, str, str, str)
 
     ############################################################################
     # General UI & Helper functions
@@ -76,6 +130,11 @@ class DeployToolWindow(QMainWindow):
             ver = bytes(version_file.readLine()).decode().replace("\n", "").replace("\r", "")
             self.setWindowTitle(self.windowTitle() + " v" + ver)
         version_file.close()
+
+        self.ui.txt_wifi_ssid.setValidator(WifiSsidValidator(self))
+        self.ui.txt_wifi_pass.setValidator(WifiPskValidator(self))
+        self.ui.txt_wifi_country.setValidator(WifiCountryValidator(self))
+        self.ui.txt_wifi_channel.setValidator(QIntValidator(1, 14, self))
 
         # SSH setup and initial state
         self.ssh: SSHClient = SSHClient()
@@ -102,6 +161,7 @@ class DeployToolWindow(QMainWindow):
         self.append_log_sig.connect(self.do_append_robot_log)
         self.set_versions_sig.connect(self.do_set_versions)
         self.update_status_sig.connect(self.do_update_status)
+        self.update_net_info_sig.connect(self.do_update_network_info)
 
         self.ui.act_settings.triggered.connect(self.open_settings)
         self.ui.act_about.triggered.connect(self.open_about)
@@ -122,9 +182,17 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_make_writable.clicked.connect(self.make_robot_writable)
         self.ui.btn_readonly.clicked.connect(self.make_robot_readonly)
 
+        self.ui.btn_wifi_apply.clicked.connect(self.apply_network_settings)
+        self.ui.btn_change_hostname.clicked.connect(self.apply_hostname)
+
         # Startup
         self.disable_robot_tabs()
         self.ssh_check_timer.start(1000)
+
+    def closeEvent(self, event: QCloseEvent):
+        self.ssh_connected = False
+        self.ssh.close()
+        return super().closeEvent(event)
 
     def open_settings(self):
         dialog = SettingsDialog(self)
@@ -180,6 +248,8 @@ class DeployToolWindow(QMainWindow):
     def tab_changed(self, idx: int):
         if idx == 0:
             self.populate_this_pc()
+        elif idx == 5:
+            self.populate_network_settings()
         
     @property
     def command_timeout(self) -> float:
@@ -348,7 +418,6 @@ class DeployToolWindow(QMainWindow):
         try:
             _, stdout, _ = self.ssh.exec_command("mount | grep \"on / \"")
         except SSHException:
-            print(traceback.format_exc())
             return WritableState.Unknown
         line = stdout.readline()
         if line.find("ro") > -1:
@@ -384,7 +453,7 @@ class DeployToolWindow(QMainWindow):
                         break
                     self.append_robot_log(line)
             except SSHException:
-                print(traceback.format_exc())
+                pass
 
     def populate_program_log(self):
         task = Task(self, self.do_populate_log)
@@ -458,11 +527,11 @@ class DeployToolWindow(QMainWindow):
         self.start_task(task)
 
     def shutdown_robot(self):
-        _, stdout, _ = self.ssh.exec_command("nohup dt-shutdown.sh > /dev/null 2>&1 &")
+        _, stdout, _ = self.ssh.exec_command("nohup dt-shutdown.sh > /dev/null 2>&1 &", timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
     
     def reboot_robot(self):
-        _, stdout, _ = self.ssh.exec_command("nohup dt-reboot.sh > /dev/null 2>&1 &")
+        _, stdout, _ = self.ssh.exec_command("nohup dt-reboot.sh > /dev/null 2>&1 &", timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
     
     def do_restart_program(self):
@@ -490,7 +559,6 @@ class DeployToolWindow(QMainWindow):
         dialog.setStandardButtons(QMessageBox.Ok)
         dialog.exec()
 
-
     def restart_robot_program(self):
         self.show_progress(self.tr("Restarting Robot Program"), self.tr("Stopping robot program..."))
         task = Task(self, self.do_restart_program)
@@ -499,11 +567,11 @@ class DeployToolWindow(QMainWindow):
         self.start_task(task)
 
     def make_robot_writable(self):
-        _, stdout, _ = self.ssh.exec_command("nohup dt-rw.sh > /dev/null 2>&1 &")
+        _, stdout, _ = self.ssh.exec_command("nohup dt-rw.sh > /dev/null 2>&1 &", timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
     
     def make_robot_readonly(self):
-        _, stdout, _ = self.ssh.exec_command("nohup dt-ro.sh > /dev/null 2>&1 &")
+        _, stdout, _ = self.ssh.exec_command("nohup dt-ro.sh > /dev/null 2>&1 &", timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
 
 
@@ -511,7 +579,130 @@ class DeployToolWindow(QMainWindow):
     # Network settings tab
     ############################################################################
 
+    def do_update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str):
+        self.ui.txt_hostname.setText(hostname)
+        self.ui.txt_wifi_ssid.setText(ssid)
+        self.ui.txt_wifi_pass.setText(password)
+        self.ui.txt_wifi_country.setText(country)
+        self.ui.txt_wifi_channel.setText(channel)
+
+    def update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str):
+        self.update_net_info_sig.emit(hostname, ssid, password, country, channel)
+
+    def do_populate_network_settings(self):
+        _, stdout_host, _ = self.ssh.exec_command("dt-hostname.sh", timeout=self.command_timeout)
+        _, stdout_ap, _ = self.ssh.exec_command("dt-wifi_ap.sh", timeout=self.command_timeout)
+
+        hostname = stdout_host.readline().strip()
+
+        ssid = stdout_ap.readline().strip()
+        password = stdout_ap.readline().strip()
+        country = stdout_ap.readline().strip()
+        channel = stdout_ap.readline().strip()
+
+        self.update_network_info(hostname, ssid, password, country, channel)
+
+    def populate_network_settings(self):
+        self.show_progress(self.tr("Loading"), self.tr("Loading info from robot..."))
+        task = Task(self, self.do_populate_network_settings)
+        task.task_complete.connect(lambda res: self.hide_progress())
+        task.task_exception.connect(lambda e: self.hide_progress())
+        self.start_task(task)
+    
+    def do_apply_network_settings(self, ssid: str, psk: str, country: str, channel: int):
+        orig_state = self.do_writable_check()
+        if orig_state != WritableState.ReadWrite:
+            _, stdout, _ = self.ssh.exec_command("dt-rw.sh", timeout=self.command_timeout)
+            stdout.channel.recv_exit_status()
+
+        _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}'  > /dev/null 2>&1".format(ssid, psk, country, channel),
+                timeout=self.command_timeout)
+        stdout.channel.recv_exit_status()
+
+        if orig_state == WritableState.Readonly:
+            _, stdout, _ = self.ssh.exec_command("dt-ro.sh", timeout=self.command_timeout)
+            stdout.channel.recv_exit_status()
+
+    def apply_network_settings(self):
+        ssid = self.ui.txt_wifi_ssid.text()
+        psk = self.ui.txt_wifi_pass.text()
+        country = self.ui.txt_wifi_country.text()
+
+        try:
+            channel = int(self.ui.txt_wifi_channel.text())
+            if channel < 1 or channel > 14:
+                raise Exception()
+        except:
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("Wifi channel invalid! Channel must be a number between 1 and 14."))
+            dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()
+        
+        if len(ssid) < 2:
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("SSID must be at least 2 characters in length."))
+            dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()
+        
+        if len(psk) < 8:
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("Password must be at least 8 characters in length."))
+            dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()
+        
+        if len(country) < 2 or country not in WIFI_COUNTRY_CODES:
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("Country code must be a valid two letter country code."))
+            dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()
+        
+        self.show_progress(self.tr("Applying Network Settings"), self.tr("Applying network setting changes on robot..."))
+        task = Task(self, self.do_apply_network_settings, ssid, psk, country, channel)
+        task.task_complete.connect(lambda res: self.hide_progress())
+        task.task_exception.connect(lambda e: self.hide_progress())
+        self.start_task(task)
+
+    def post_apply_reboot(self):
+        self.hide_progress()
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Question)
+        dialog.setText(self.tr("The hostname was successfully changed, however a reboot is necessary for changes to take effect. Reboot now?"))
+        dialog.setWindowTitle(self.tr("Hostname Changed"))
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        res = dialog.exec()
+        if res == QMessageBox.Yes:
+            self.reboot_robot()
+
+    def do_apply_hostname(self, hostname: str):
+        orig_state = self.do_writable_check()
+        if orig_state != WritableState.ReadWrite:
+            _, stdout, _ = self.ssh.exec_command("dt-rw.sh", timeout=self.command_timeout)
+            stdout.channel.recv_exit_status()
+        
+        _, stdout, _ = self.ssh.exec_command("nohup dt-hostname.sh '{0}' > /dev/null 2>&1".format(hostname),timeout=self.command_timeout)
+        stdout.channel.recv_exit_status()
+
+        if orig_state == WritableState.Readonly:
+            _, stdout, _ = self.ssh.exec_command("dt-ro.sh", timeout=self.command_timeout)
+            stdout.channel.recv_exit_status()
+
+    def apply_hostname(self):
+        self.show_progress(self.tr("Changing Hostname"), self.tr("Changing robot hostname..."))
+        task = Task(self, self.do_apply_hostname, self.ui.txt_hostname.text())
+        task.task_exception.connect(self.hide_progress())
+        task.task_complete.connect(self.post_apply_reboot)
+        self.start_task(task)
+
 
     ############################################################################
     # Camera streaming tab
     ############################################################################
+    # Doesn't exist yet...
