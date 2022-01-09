@@ -119,6 +119,7 @@ class DeployToolWindow(QMainWindow):
     set_versions_sig = Signal(str, str, str)
     update_status_sig = Signal(float, int, int, WritableState)
     update_net_info_sig = Signal(str, str, str, str, str)
+    clear_robot_log_sig = Signal()
 
     ############################################################################
     # General UI & Helper functions
@@ -169,6 +170,7 @@ class DeployToolWindow(QMainWindow):
         self.set_versions_sig.connect(self.do_set_versions)
         self.update_status_sig.connect(self.do_update_status)
         self.update_net_info_sig.connect(self.do_update_network_info)
+        self.clear_robot_log_sig.connect(self.do_clear_robot_log)
 
         self.ui.act_settings.triggered.connect(self.open_settings)
         self.ui.act_about.triggered.connect(self.open_about)
@@ -525,6 +527,10 @@ class DeployToolWindow(QMainWindow):
         if res != 0:
             raise Exception(self.tr("Failed to stop old program."))
 
+        # Clear log when program is redeployed
+        self.clear_robot_log()
+        time.sleep(0.1)
+
         self.change_progress_msg(self.tr("Deleting old project..."))
         _, stdout, _ = self.ssh.exec_command("dt-delete_program.sh", timeout=self.command_timeout)
         res = stdout.channel.recv_exit_status()
@@ -617,6 +623,12 @@ class DeployToolWindow(QMainWindow):
     ############################################################################
     # Robot program log tab
     ############################################################################
+
+    def do_clear_robot_log(self):
+        self.ui.txt_robot_log.clear()
+
+    def clear_robot_log(self):
+        self.clear_robot_log_sig.emit()
 
     def do_append_robot_log(self, txt: str):
         self.ui.txt_robot_log.moveCursor(QTextCursor.End)
@@ -726,6 +738,11 @@ class DeployToolWindow(QMainWindow):
             stdout.channel.recv_exit_status()
         except SSHException:
             raise Exception("Failed to stop robot program.")
+
+        # Clear log when program restarts 
+        self.clear_robot_log()
+        time.sleep(0.1)
+        
         self.change_progress_msg(self.tr("Starting robot program..."))
         try:
             _, stdout, _ = self.ssh.exec_command("dt-start_program.sh", timeout=10)
