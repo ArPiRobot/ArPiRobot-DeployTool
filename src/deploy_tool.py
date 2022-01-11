@@ -1,6 +1,7 @@
 
 import socket
 from threading import local
+import traceback
 from typing import Any, Callable, List, Optional
 from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
 from PySide6.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
@@ -20,9 +21,7 @@ import os
 import shutil
 import json
 import pathlib
-import fnmatch
-import glob
-import traceback
+import platform
 from enum import Enum, auto
 
 
@@ -313,6 +312,10 @@ class DeployToolWindow(QMainWindow):
 
     def handle_update_installed(self, res: Any):
         self.hide_progress()
+        try:
+            self.set_pythonpath()
+        except:
+            print(traceback.format_exc())
         self.populate_this_pc()
 
     def handle_update_failure(self, e: Exception):
@@ -336,6 +339,75 @@ class DeployToolWindow(QMainWindow):
         task.task_exception.connect(self.handle_update_failure)
         self.start_task(task)
     
+    def set_pythonpath(self):
+        if platform.system() == "Windows":
+            self.add_var_windows("PYTHONPATH", QDir.homePath().rstrip("/\\") + "\\.arpirobot\\corelib\\python_bindings")
+        else:
+            home = os.environ["HOME"].rstrip("/")
+            path = home + "/.arpirobot/corelib/python_bindings"
+            self.add_var_to_profile(home + "/.bashrc", "PYTHONPATH", path)
+            self.add_var_to_profile(home + "/.zshrc", "PYTHONPATH", path)
+            self.add_var_to_profile(home + "/.profile", "PYTHONPATH", path)
+            self.add_var_to_config(home + "/.config/environment.d/deploy-tool.conf", "PYTHONPATH", path)
+
+    def add_var_windows(self, var: str, value: str):
+        if var in os.environ:
+            existing = os.environ[var]
+        else:
+            existing = ""
+        parts = existing.split(";")
+        for part in parts:
+            if pathlib.Path(part) == pathlib.Path(value):
+                # Already set
+                return
+        if existing == "":
+            cmd = "cmd /s /c \"setx {0} \"{1}\"".format(var, value)
+        else:
+            cmd = "cmd /s /c \"setx {0} \"{1};%{0}%\"".format(var, value)
+        os.system(cmd)
+
+    def add_var_to_profile(self, filename: str, var: str, value: str):
+        if os.path.isdir(filename):
+            return
+        if not os.path.exists(filename):
+            return
+        with open(filename, "r") as fp:
+            line = fp.readline()
+            while line != "":
+                if line.startswith("export {0}".format(var)):
+                    pos = line.find("=")
+                    if pos > -1:
+                        parts = line[pos+1:].split(":")
+                        for part in parts:
+                            if pathlib.Path(part) == pathlib.Path(value):
+                                # Don't need to add anything. Already exists
+                                return
+                line = fp.readline()
+        
+        with open(filename, "a") as fp:
+            fp.write("export {0}={1}:${0}\n".format(var, value))
+    
+    def add_var_to_config(self, filename: str, var: str, value: str):
+        if os.path.isdir(filename):
+            return
+        if not os.path.exists(filename):
+            if not os.path.exists(os.path.dirname(filename)):
+                return
+        if os.path.exists(filename):
+            with open(filename, "r") as fp:
+                line = fp.readline()
+                while line != "":
+                    if line.startswith("{0}".format(var)):
+                        pos = line.find("=")
+                        if pos > -1:
+                            parts = line[pos+1:].split(":")
+                            for part in parts:
+                                if pathlib.Path(part) == pathlib.Path(value):
+                                    # Don't need to add anything. Already exists
+                                    return
+                    line = fp.readline()
+        with open(filename, "a") as fp:
+            fp.write("{0}={1}:${0}\n".format(var, value))
 
     ############################################################################
     # Robot connection tab
