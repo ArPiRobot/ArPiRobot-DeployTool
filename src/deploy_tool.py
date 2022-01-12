@@ -18,6 +18,7 @@ from util import settings_manager, theme_manager, WIFI_COUNTRY_CODES
 from zipfile import ZipFile
 import time
 import os
+import subprocess
 import shutil
 import json
 import pathlib
@@ -351,6 +352,7 @@ class DeployToolWindow(QMainWindow):
             self.add_var_to_config(home + "/.config/environment.d/deploy-tool.conf", "PYTHONPATH", path)
 
     def add_var_windows(self, var: str, value: str):
+        value = value.replace("/", "\\")
         if var in os.environ:
             existing = os.environ[var]
         else:
@@ -364,7 +366,9 @@ class DeployToolWindow(QMainWindow):
             cmd = "cmd /s /c \"setx {0} \"{1}\"".format(var, value)
         else:
             cmd = "cmd /s /c \"setx {0} \"{1};%{0}%\"".format(var, value)
-        os.system(cmd)
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        subprocess.call(cmd, startupinfo=si)
 
     def add_var_to_profile(self, filename: str, var: str, value: str):
         if os.path.isdir(filename):
