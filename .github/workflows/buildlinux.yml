@@ -1,0 +1,19 @@
+name: Build Linux
+on: [workflow_dispatch]
+jobs:
+  Build:
+    # PySide6 won't work on Ubuntu 18.04 (glibc too old)
+    # Therefore if using pyinstaller method instead of source method, 
+    #     packages are compatible with fewer systems
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo apt-get install python3-setuptools python3-wheel
+      - run: python3 -m pip install -r requirements.txt
+      - working-directory: ./packaging
+        run: ./linux_source.sh --tar yes --deb yes --python python3
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Packages
+          path: ./packaging/dist/*
+          retention-days: 1
