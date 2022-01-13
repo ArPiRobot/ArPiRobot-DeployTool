@@ -26,6 +26,16 @@ import platform
 from enum import Enum, auto
 
 
+
+class DTProgressDialog(QProgressDialog):
+    def __init__(self, parent: Optional[QWidget]):
+        super().__init__(parent=parent)
+        self.setCancelButton(None)
+    
+    def closeEvent(self, event: QCloseEvent) -> None:
+        event.ignore()
+
+
 class WritableState(Enum):
     Unknown = auto()
     Readonly = auto()
@@ -157,7 +167,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.cbx_longer_timeouts.setChecked(settings_manager.longer_timeouts)
 
         # Progress dialog (shared between tasks)
-        self.pdialog = QProgressDialog(parent=self)
+        self.pdialog = DTProgressDialog(parent=self)
         self.pdialog.cancel()
         self.pdialog.hide()
 
@@ -239,7 +249,6 @@ class DeployToolWindow(QMainWindow):
         self.pdialog.setModal(True)
         self.pdialog.setWindowTitle(title)
         self.pdialog.setLabelText(msg)
-        self.pdialog.setCancelButton(None)
         self.pdialog.setMinimum(0)
         self.pdialog.setMaximum(0)
         self.pdialog.setValue(0)
