@@ -211,9 +211,20 @@ class DeployToolWindow(QMainWindow):
         self.disable_robot_tabs()
         self.ssh_check_timer.start(1000)
 
+        # Load last used connection settings
+        self.ui.txt_address.setText(settings_manager.robot_address)
+        self.ui.txt_username.setText(settings_manager.robot_user)
+        self.ui.cbx_longer_timeouts.setChecked(settings_manager.longer_timeouts)
+
     def closeEvent(self, event: QCloseEvent):
         self.ssh_connected = False
         self.ssh.close()
+
+        # Save last used connection settings
+        settings_manager.robot_address = self.ui.txt_address.text()
+        settings_manager.robot_user = self.ui.txt_username.text()
+        settings_manager.longer_timeouts = self.ui.cbx_longer_timeouts.isChecked()
+
         return super().closeEvent(event)
 
     def open_settings(self):

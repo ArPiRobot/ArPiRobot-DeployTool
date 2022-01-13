@@ -198,7 +198,7 @@ class SettingsManager:
     
     @property
     def longer_timeouts(self) -> bool:
-        return str(self.__settings.value(self.__LARGE_FONTS_KEY, self.__DEFAULT_LARGE_FONTS)).lower() == "true"
+        return str(self.__settings.value(self.__LONG_TIMEOUTS_KEY, self.__DEFAULT_LONG_TIMEOUT)).lower() == "true"
     
     @longer_timeouts.setter
     def longer_timeouts(self, value: bool):
