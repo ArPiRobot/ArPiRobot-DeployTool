@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "ArPiRobot Deploy Tool"
-#define MyAppVersion "0.4.0-beta2"
+#define MyAppVersion "0.4.0-beta3"
 #define MyAppPublisher "Marcus Behel"
 #define MyAppURL "http://mb3hel.github.io/arpirobot"
 #define MyAppExeName "ArPiRobot-DeployTool.exe"
