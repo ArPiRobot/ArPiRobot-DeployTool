@@ -1,4 +1,4 @@
-QtPy
-PySide2
+PySide6
+shiboken6
 pyinstaller
 paramiko
