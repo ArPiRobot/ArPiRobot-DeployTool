@@ -29,8 +29,7 @@ replaceInFileRegex("packaging/windows/win_installer.iss", "#define MyAppVersion 
 # replaceInFileRegex("macos_resources/Info.plist", "<key>CFBundleShortVersionString</key>\n\s<string>.*</string>", "<key>CFBundleShortVersionString</key>\n\t<string>" + sys.argv[1] + "</string>")
 # replaceInFileRegex("macos_resources/Info.plist", "<key>CFBundleVersion</key>\n\s<string>.*</string>", "<key>CFBundleVersion</key>\n\t<string>" + sys.argv[1] + "</string>")
 
-replaceInFileRegex("packaging/linux_pyinstaller/deb_control", "Version: .*\n", "Version: " + sys.argv[1] + "\n")
-replaceInFileRegex("packaging/linux_source/deb_control", "Version: .*\n", "Version: " + sys.argv[1] + "\n")
+replaceInFileRegex("packaging/linux_deb/control", "Version: .*\n", "Version: " + sys.argv[1] + "\n")
 
 
 # replaceInFileRegex("linux_resources/PKGBUILD", "pkgver=.*\n", "pkgver=" + sys.argv[1] + "\n")

@@ -3,9 +3,9 @@ import socket
 from threading import local
 import traceback
 from typing import Any, Callable, List, Optional
-from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
-from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
+from qtpy.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
+from qtpy.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
 from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTPClient
@@ -229,14 +229,14 @@ class DeployToolWindow(QMainWindow):
 
     def open_settings(self):
         dialog = SettingsDialog(self)
-        res = dialog.exec()
+        res = dialog.exec_()
         if res == QDialog.Accepted:
             dialog.save_settings()
             theme_manager.apply_theme(settings_manager.theme, settings_manager.larger_fonts)
 
     def open_about(self):
         dialog = AboutDialog(self)
-        dialog.exec()
+        dialog.exec_()
 
     def disable_robot_tabs(self):
         self.ui.tabs_main.setTabEnabled(2, False)
@@ -346,7 +346,7 @@ class DeployToolWindow(QMainWindow):
         dialog.setText(str(e))
         dialog.setWindowTitle(self.tr("Error Installing Update Package"))
         dialog.setStandardButtons(QMessageBox.Ok)
-        dialog.exec()
+        dialog.exec_()
 
     def install_update_package(self):
         filename = QFileDialog.getOpenFileName(self, self.tr("Open Update Package"), QDir.homePath(), self.tr("Update Packages (*.zip)"))[0]
@@ -483,7 +483,7 @@ class DeployToolWindow(QMainWindow):
         else:
             dialog.setText("Unknown error occurred while attempting to connect to the robot. {0}" \
                 .format(str(e)))
-        dialog.exec()
+        dialog.exec_()
 
     def check_ssh_connection(self):
         if self.ssh_connected and not self.ssh.get_transport().is_active():
@@ -494,7 +494,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setText("Connection to the robot was lost.")
             dialog.setWindowTitle("Disconnected")
             dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+            dialog.exec_()
 
     def toggle_connection(self):
         if self.ssh_connected:
@@ -706,7 +706,7 @@ class DeployToolWindow(QMainWindow):
         dialog.setText(str(e))
         dialog.setWindowTitle(self.tr("Deploy Program Failed"))
         dialog.setStandardButtons(QMessageBox.Ok)
-        dialog.exec()
+        dialog.exec_()
 
     def deploy_program(self):
         self.show_progress(self.tr("Deploying Program"), self.tr("Preparing to deploy program to robot..."))
@@ -856,7 +856,7 @@ class DeployToolWindow(QMainWindow):
         dialog.setText(str(e))
         dialog.setWindowTitle(self.tr("Restart Robot Program Failed"))
         dialog.setStandardButtons(QMessageBox.Ok)
-        dialog.exec()
+        dialog.exec_()
 
     def restart_robot_program(self):
         self.show_progress(self.tr("Restarting Robot Program"), self.tr("Stopping robot program..."))
@@ -935,7 +935,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setText(self.tr("Wifi channel invalid! Channel must be a number between 1 and 14."))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+            dialog.exec_()
         
         if len(ssid) < 2:
             dialog = QMessageBox(parent=self)
@@ -943,7 +943,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setText(self.tr("SSID must be at least 2 characters in length."))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+            dialog.exec_()
         
         if len(psk) < 8:
             dialog = QMessageBox(parent=self)
@@ -951,7 +951,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setText(self.tr("Password must be at least 8 characters in length."))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+            dialog.exec_()
         
         if len(country) < 2 or country not in WIFI_COUNTRY_CODES:
             dialog = QMessageBox(parent=self)
@@ -959,7 +959,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setText(self.tr("Country code must be a valid two letter country code."))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+            dialog.exec_()
         
         self.show_progress(self.tr("Applying Network Settings"), self.tr("Applying network setting changes on robot..."))
         task = Task(self, self.do_apply_network_settings, ssid, psk, country, channel)
@@ -974,7 +974,7 @@ class DeployToolWindow(QMainWindow):
         dialog.setText(self.tr("The hostname was successfully changed, however a reboot is necessary for changes to take effect. Reboot now?"))
         dialog.setWindowTitle(self.tr("Hostname Changed"))
         dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        res = dialog.exec()
+        res = dialog.exec_()
         if res == QMessageBox.Yes:
             self.reboot_robot()
 

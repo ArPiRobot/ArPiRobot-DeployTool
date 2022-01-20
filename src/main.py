@@ -1,8 +1,8 @@
 
 import sys
 
-from PySide6.QtWidgets import QApplication, QStyleFactory
-from PySide6.QtCore import Qt, QFile, QIODevice
+from qtpy.QtWidgets import QApplication, QStyleFactory
+from qtpy.QtCore import Qt, QFile, QIODevice
 
 from deploy_tool import DeployToolWindow
 from util import theme_manager, settings_manager
@@ -28,4 +28,4 @@ theme_manager.apply_theme(settings_manager.theme, settings_manager.larger_fonts)
 dt = DeployToolWindow()
 
 dt.show()
-app.exec()
+app.exec_()

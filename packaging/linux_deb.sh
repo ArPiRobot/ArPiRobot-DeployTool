@@ -56,17 +56,32 @@ popd > /dev/null
 
 
 ################################################################################
-# Create pyinstaller binary
+# Create folder structure
 ################################################################################
-echo "**Creating PyInstaller Binary**"
+echo "**Creating Package Structure**"
 rm -rf build/ || fail
 rm -rf dist/ArPiRobot-DeployTool || fail
-pyinstaller linux_pyinstaller/linux.spec || fail
-cp ../res/icon.png ./dist/ArPiRobot-DeployTool
-cp ../COPYING ./dist/ArPiRobot-DeployTool
-cp linux_pyinstaller/install.sh ./dist/ArPiRobot-DeployTool
-cp linux_pyinstaller/uninstall.sh ./dist/ArPiRobot-DeployTool
 
+mkdir -p ./dist/ArPiRobot-DeployTool/
+
+cp -r ../src/ ./dist/ArPiRobot-DeployTool/
+
+if python -c "import PySide6" &> /dev/null; then
+    cp ../requirements-qt6.txt ./dist/ArPiRobot-DeployTool/requirements.txt
+    QTVER=6
+else
+    cp ../requirements-qt5.txt ./dist/ArPiRobot-DeployTool/requirements.txt
+    QTVER=5
+fi
+
+cp -r ../res/icon.png ./dist/ArPiRobot-DeployTool/
+cp ../COPYING ./dist/ArPiRobot-DeployTool
+cp linux/install.sh ./dist/ArPiRobot-DeployTool
+cp linux/uninstall.sh ./dist/ArPiRobot-DeployTool
+cp linux/start.sh ./dist/ArPiRobot-DeployTool
+
+# Remove pyinstaller from requirements.txt
+sed -i "s/pyinstaller//g" ./dist/ArPiRobot-DeployTool/requirements.txt
 
 ################################################################################
 # Tarball package
@@ -79,7 +94,7 @@ fi
 if [ "$BUILD_TAR" == "yes" ]; then
     echo "**Creating tar.gz package**"
     pushd dist > /dev/null
-    tar -zcvf ArPiRobot-DeployTool-${VERSION}.tar.gz ./ArPiRobot-DeployTool/ || fail
+    tar -zcvf ArPiRobot-DeployTool-${VERSION}-QT${QTVER}.tar.gz ./ArPiRobot-DeployTool/ || fail
     popd > /dev/null
 fi
 
@@ -105,13 +120,15 @@ if [ "$BUILD_DEB" == "yes" ]; then
 
     # Copy files
     cp -r ./ArPiRobot-DeployTool/* ./arpirobot-deploytool_$VERSION/opt/ArPiRobot-DeployTool/
-    cp ../linux_pyinstaller/deb_control ./arpirobot-deploytool_$VERSION/DEBIAN/control
-    cp ../linux_pyinstaller/deb_prerm ./arpirobot-deploytool_$VERSION/DEBIAN/prerm
-    cp ../linux_pyinstaller/deb_postinst ./arpirobot-deploytool_$VERSION/DEBIAN/postinst
+    cp ../linux/deb_control ./arpirobot-deploytool_$VERSION/DEBIAN/control
+    cp ../linux/deb_prerm ./arpirobot-deploytool_$VERSION/DEBIAN/prerm
+    cp ../linux/deb_postinst ./arpirobot-deploytool_$VERSION/DEBIAN/postinst
     chmod 755 ./arpirobot-deploytool_$VERSION/DEBIAN/*
 
     # Generate package
     dpkg-deb --build arpirobot-deploytool_$VERSION || fail
+
+    mv arpirobot-deploytool_$VERSION.deb arpirobot-deploytool_$VERSION-QT${QTVER}.deb
 
     rm -rf ./arpirobot-deploytool_$VERSION/
 

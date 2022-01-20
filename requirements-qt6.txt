@@ -1,0 +1,4 @@
+QtPy
+PySide6
+pyinstaller
+paramiko
