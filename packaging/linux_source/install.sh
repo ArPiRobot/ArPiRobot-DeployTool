@@ -32,7 +32,7 @@ deactivate
 # Desktop menu entry
 xdg-desktop-menu uninstall ArPiRobot-DeployTool.desktop > /dev/null 2>&1
 echo "Adding desktop menu entry"
-printf "[Desktop Entry]\nVersion=1.1\nType=Application\nTerminal=false\nName=ArPiRobot Drive Station\nComment=PC-side tool to manage and configure ArPiRobot robots.\nIcon=$DIR/icon.png\nExec=$DIR/start.sh\nActions=\nCategories=Development;\nStartupNotify=true\nStartupWMClass=com-arpirobot-deploytool-DeployTool\n" > ArPiRobot-DeployTool.desktop
+printf "[Desktop Entry]\nVersion=1.1\nType=Application\nTerminal=false\nName=ArPiRobot Deploy Tool\nComment=PC-side tool to manage and configure ArPiRobot robots.\nIcon=$DIR/icon.png\nExec=$DIR/start.sh\nActions=\nCategories=Development;\nStartupNotify=true\nStartupWMClass=com-arpirobot-deploytool-DeployTool\n" > ArPiRobot-DeployTool.desktop
 xdg-desktop-menu install --novendor ArPiRobot-DeployTool.desktop
 
 popd > /dev/null
