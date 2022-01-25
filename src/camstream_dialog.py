@@ -9,5 +9,3 @@ class CamstreamDialog(QDialog):
 
         self.ui = Ui_CamstreamDialog()
         self.ui.setupUi(self)
-
-        self.ui.buttonBox.accepted.connect(self.ok_clicked)

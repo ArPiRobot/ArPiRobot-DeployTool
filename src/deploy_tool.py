@@ -209,6 +209,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_change_hostname.clicked.connect(self.apply_hostname)
 
         self.ui.btn_new_camstream.clicked.connect(self.new_camstream)
+        self.ui.combox_camstream_player.currentTextChanged.connect(self.change_player_download_link)
 
         # Startup
         self.disable_robot_tabs()
@@ -1007,3 +1008,11 @@ class DeployToolWindow(QMainWindow):
     def new_camstream(self):
         dialog = CamstreamDialog(self)
         dialog.exec()
+    
+    def change_player_download_link(self, text: str):
+        if text == self.tr("ffplay"):
+            self.ui.lbl_camstream_download.setText("<a href=\"https://ffmpeg.org/\">Download Player</a>")
+        elif text == self.tr("mpv"):
+            self.ui.lbl_camstream_download.setText("<a href=\"https://mpv.io/\">Download Player</a>")
+        elif text == self.tr("mplayer"):
+            self.ui.lbl_camstream_download.setText("<a href=\"http://www.mplayerhq.hu/design7/news.html\">Download Player</a>")
