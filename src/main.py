@@ -20,9 +20,7 @@ except AttributeError:
     pass
 
 app = QApplication(sys.argv)
-
 theme_manager.set_app(app)
-theme_manager.load_themes()
 theme_manager.apply_theme(settings_manager.theme, settings_manager.larger_fonts)
 
 dt = DeployToolWindow()

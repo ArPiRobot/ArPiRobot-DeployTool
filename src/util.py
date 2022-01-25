@@ -9,121 +9,58 @@ WIFI_COUNTRY_CODES = ["AF", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR"
 
 
 class ThemeManager:
-    """
-    Handles managing custom stylesheet supporting multiple "color themes".
-    Custom stylesheet uses placeholder variables (@var_name@). There are several
-    CSV files containing mappings for these placeholder variables.
-    Each is considered its own "color theme".
-    This class manages loading the template stylesheet and substituting values from CSV files.
-    """
     def __init__(self):
-        self.__BASE_STYLESHEET = ":/stylesheet.qss"
-        self.__THEME_PATH = ":/stylesheet-vars/"
-        self.__themes: List[str] = []
-        self.__app: QApplication = None
-        self.__current_theme = ""
-        self.__current_csv_vars: Dict[str, str] = {}
+        self.system_theme = ""
+        self.default_font_size = 9
+        self.app = None
 
     def set_app(self, app: QApplication):
-        self.__app = app
-        # Custom stylesheet used is designed for fusion base
-        self.__app.setStyle(QStyleFactory.create("Fusion"))
-
-    def load_themes(self):
-        # Load a list of theme names, but do not generate stylesheets yet.
-        # Pre-generating multiple stylesheets wastes memory
-        self.__themes.clear()
-        iterator = QDirIterator(self.__THEME_PATH)
-        while iterator.hasNext():
-            info = QFileInfo(iterator.next())
-            if info.completeSuffix().lower() == "csv":
-                self.__themes.append(info.baseName())
-
+        self.app = app
+        self.system_theme = self.app.style().name()
+        print(self.default_font_size)
+    
+    @property
     def themes(self) -> List[str]:
-        return self.__themes.copy()
-
-    def current_theme(self) -> str:
-        return self.__current_theme
-
-    def apply_theme(self, theme: str, larger_fonts: bool) -> bool:
-        if theme is None:
-            self.__current_theme = ""
-            self.__app.setStyleSheet("")
-            return True
-
-        if theme not in self.__themes:
-            return False
-
-        self.__current_theme = theme
-
-        if larger_fonts:
-            font_size = 11
+        return [
+            "Custom Light",
+            "Custom Dark",
+            "Fusion",
+            "System"
+        ]
+    
+    def apply_theme(self, theme: str, larger_fonts: bool):
+        base_theme = ""
+        stylesheet = ""
+        if theme == "Custom Light" or theme == "Custom Dark":
+            # Load stylesheet
+            stylesheet_file = QFile(":/custom-theme/stylesheet.qss")
+            if stylesheet_file.open(QIODevice.ReadOnly):
+                stylesheet = bytes(stylesheet_file.readAll()).decode()
+                stylesheet_file.close()
+            
+            # Make substitutions from csv file to use correct variant
+            vars_file = QFile(":/custom-theme/{0}.csv".format("Light" if theme == "Custom Light" else "Dark"))
+            if vars_file.open(QIODevice.ReadOnly):
+                for line in bytes(vars_file.readAll()).decode().splitlines(False):
+                    # Index 0 = variable, Index 1 = value
+                    parts = line.replace(", ", ",").split(",")
+                    stylesheet = stylesheet.replace("@{0}@".format(parts[0]), parts[1])
+                vars_file.close()
+            base_theme = "Fusion"
+        elif theme == "Fusion":
+            base_theme = "Fusion"
+            stylesheet = ""
         else:
-            font_size = 9
+            base_theme = self.system_theme
+            stylesheet = ""
+        
+        # Apply theme
+        self.app.setStyle(base_theme)
+        self.app.setStyleSheet(stylesheet)
 
-        # Load stylesheet. This is a stylesheet with placeholders. It cannot be used directly
-        stylesheet_str = ""
-        stylesheet_file = QFile(":/stylesheet.qss")
-        if stylesheet_file.open(QIODevice.ReadOnly):
-            stylesheet_str = bytes(stylesheet_file.readAll()).decode()
-        else:
-            return False
-        stylesheet_file.close()
-
-        stylesheet_str = stylesheet_str.replace("|default_font_size|", str(font_size))
-
-        # Clear before loading vars from CSV
-        self.__current_csv_vars.clear()
-
-        # Substitute values for placeholders in stylesheet
-        vars_file = QFile(f"{self.__THEME_PATH}/{theme}.csv")
-        if vars_file.open(QIODevice.ReadOnly):
-            for line in bytes(vars_file.readAll()).decode().splitlines(False):
-                # Index 0 = variable, Index 1 = value
-                parts = line.replace(", ", ",").split(",")
-                stylesheet_str = stylesheet_str.replace(f"@{parts[0]}@", parts[1])
-
-                # If duplicate vars in CSV take the first as that will replace the placeholder in the stylesheet
-                if parts[0] not in self.__current_csv_vars:
-                    self.__current_csv_vars[parts[0]] = parts[1]
-        else:
-            return False
-
-        self.__app.setStyleSheet(stylesheet_str)
-
-        return True
-
-    def get_variable(self, var: str) -> str:
-        """
-        Get the value of a given variable for the current theme.
-        This information is saved when the theme is applied
-        and thus does not require reparsing the CSV file each time
-        """
-        if var in self.__current_csv_vars:
-            return self.__current_csv_vars[var]
-        return ""
-
-    def get_variable_for_theme(self, var: str, theme: str = None) -> str:
-        """
-        Parse the variables CSV file for the theme withthe given name.
-        Return the value of the requested variable.
-        """
-        if theme is None:
-            theme = self.__current_theme
-        if theme not in self.__themes:
-            return None
-        vars_file = QFile(f"{self.__THEME_PATH}/{theme}.csv")
-        if vars_file.open(QIODevice.ReadOnly):
-            for line in bytes(vars_file.readAll()).decode().splitlines(False):
-                # Index 0 = variable, Index 1 = value
-                parts = line.replace(", ", ",").split(",")
-                if parts[0] == var:
-                    return parts[1]
-        return ""
-
-    def current_stylesheet(self) -> str:
-        return self.__app.styleSheet()
-
+        # Support larger fonts
+        size = 11 if larger_fonts else 9
+        self.app.setStyleSheet("{0}\n{1}".format(self.app.styleSheet(), "*{{font-size: {0}pt}}".format(size)))
 
 class SettingsManager:
     """

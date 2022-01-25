@@ -1,31 +1,30 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file>stylesheet.qss</file>
     <file>icon.png</file>
     <file>version.txt</file>
     <file>license_text.txt</file>
     <file>third_party_licenses.txt</file>
 
-    <file>icons/gear_light.png</file>
-    <file>icons/gear_dark.png</file>
+    <!--Custom Theme-->
 
+    <file>custom-theme/stylesheet.qss</file>
 
-    <file>icons/down_arrow_light.png</file>
-    <file>icons/up_arrow_light.png</file>
-    <file>icons/right_arrow_light.png</file>
-    <file>icons/left_arrow_light.png</file>
-    <file>icons/down_arrow_dark.png</file>
-    <file>icons/up_arrow_dark.png</file>
-    <file>icons/right_arrow_dark.png</file>
-    <file>icons/left_arrow_dark.png</file>
-    <file>icons/checkbox_checked_dark.png</file>
-    <file>icons/checkbox_unchecked_dark.png</file>
-    <file>icons/checkbox_indet_dark.png</file>
-    <file>icons/checkbox_checked_light.png</file>
-    <file>icons/checkbox_unchecked_light.png</file>
-    <file>icons/checkbox_indet_light.png</file>
+    <file>custom-theme/icons/down_arrow_light.png</file>
+    <file>custom-theme/icons/up_arrow_light.png</file>
+    <file>custom-theme/icons/right_arrow_light.png</file>
+    <file>custom-theme/icons/left_arrow_light.png</file>
+    <file>custom-theme/icons/down_arrow_dark.png</file>
+    <file>custom-theme/icons/up_arrow_dark.png</file>
+    <file>custom-theme/icons/right_arrow_dark.png</file>
+    <file>custom-theme/icons/left_arrow_dark.png</file>
+    <file>custom-theme/icons/checkbox_checked_dark.png</file>
+    <file>custom-theme/icons/checkbox_unchecked_dark.png</file>
+    <file>custom-theme/icons/checkbox_indet_dark.png</file>
+    <file>custom-theme/icons/checkbox_checked_light.png</file>
+    <file>custom-theme/icons/checkbox_unchecked_light.png</file>
+    <file>custom-theme/icons/checkbox_indet_light.png</file>
 
-    <file>stylesheet-vars/Dark.csv</file>
-    <file>stylesheet-vars/Light.csv</file>
+    <file>custom-theme/Dark.csv</file>
+    <file>custom-theme/Light.csv</file>
 </qresource>
 </RCC>

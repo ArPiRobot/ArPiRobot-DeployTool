@@ -6,10 +6,6 @@
  *       occur from variables mapped in a csv file (stylesheet-vars)
  */
 
-* {
-    font-size: |default_font_size|pt;
-}
-
 p {
     color: @text_color@;
 }
@@ -198,6 +194,10 @@ QTabBar::tab:!selected {
 QTabBar::tab:disabled {
     color: @text_color_disabled@;
     background-color: @bg_color_field_disabled@;
+}
+
+.QDialogButtonBox .QPushButton {
+    min-width: 75px;
 }
 
 QPushButton{

@@ -60,8 +60,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>603</width>
-        <height>532</height>
+        <width>606</width>
+        <height>668</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -613,9 +613,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="styleSheet">
-      <string notr="true">.QPushButton{
-    min-width: 75px;
-}</string>
+      <string notr="true"/>
      </property>
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
