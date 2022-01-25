@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QP
 from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTPClient
+from camstream_dialog import CamstreamDialog
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
@@ -206,6 +207,8 @@ class DeployToolWindow(QMainWindow):
 
         self.ui.btn_wifi_apply.clicked.connect(self.apply_network_settings)
         self.ui.btn_change_hostname.clicked.connect(self.apply_hostname)
+
+        self.ui.btn_new_camstream.clicked.connect(self.new_camstream)
 
         # Startup
         self.disable_robot_tabs()
@@ -1000,4 +1003,7 @@ class DeployToolWindow(QMainWindow):
     ############################################################################
     # Camera streaming tab
     ############################################################################
-    # Doesn't exist yet...
+    
+    def new_camstream(self):
+        dialog = CamstreamDialog(self)
+        dialog.exec()
