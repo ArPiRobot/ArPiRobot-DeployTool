@@ -210,6 +210,7 @@ class DeployToolWindow(QMainWindow):
 
         self.ui.btn_new_camstream.clicked.connect(self.new_camstream)
         self.ui.combox_camstream_player.currentTextChanged.connect(self.change_player_download_link)
+        self.ui.btn_play_camstream.clicked.connect(self.play_stream)
 
         # Startup
         self.disable_robot_tabs()
@@ -288,6 +289,8 @@ class DeployToolWindow(QMainWindow):
             self.populate_program_tab()
         elif idx == 5:
             self.populate_network_settings()
+        elif idx == 6:
+            self.populate_streams()
         
     @property
     def command_timeout(self) -> float:
@@ -1016,3 +1019,42 @@ class DeployToolWindow(QMainWindow):
             self.ui.lbl_camstream_download.setText("<a href=\"https://mpv.io/\">Download Player</a>")
         elif text == self.tr("mplayer"):
             self.ui.lbl_camstream_download.setText("<a href=\"http://www.mplayerhq.hu/design7/news.html\">Download Player</a>")
+
+    def populate_streams(self):
+        # TODO: Do this for real
+        streams = ["ExampleA", "ExampleB", "ExampleC"]
+
+        # Clear old items
+        for i in range(self.ui.lst_streams.count()):
+            self.ui.lst_streams.removeItemWidget(self.ui.lst_streams.item(i))
+        for i in range(self.ui.combox_stream_source.count()):
+            self.ui.combox_stream_source.removeItem(i)
+        
+        # Add items
+        for stream in streams:
+            self.ui.lst_streams.addItem(stream)
+            self.ui.combox_stream_source.addItem(stream)
+
+    def play_stream(self):
+        # Check to make sure player is installed
+        player = self.ui.combox_camstream_player.currentText()
+        stream = self.ui.combox_stream_source.currentText()
+        path = shutil.which(player)
+
+        # Make sure player is in PATH
+        if path == "" or path == None:
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("The selected player was not found on your system. Download and install the player and make sure the command is in your system path. You will need to restart the deploy tool after chaning the path environment variable."))
+            dialog.setWindowTitle(self.tr("Player not found"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()
+        
+        # Make sure a stream is selected
+        if stream == "":
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("No steam was selected. Select a stream before playing it."))
+            dialog.setWindowTitle(self.tr("Cannot Play Stream"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()

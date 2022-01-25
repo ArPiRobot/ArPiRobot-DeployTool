@@ -17,7 +17,6 @@ class ThemeManager:
     def set_app(self, app: QApplication):
         self.app = app
         self.system_theme = self.app.style().name()
-        print(self.default_font_size)
     
     @property
     def themes(self) -> List[str]:
