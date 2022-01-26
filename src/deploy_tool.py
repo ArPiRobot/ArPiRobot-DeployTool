@@ -248,12 +248,14 @@ class DeployToolWindow(QMainWindow):
         self.ui.tabs_main.setTabEnabled(3, False)
         self.ui.tabs_main.setTabEnabled(4, False)
         self.ui.tabs_main.setTabEnabled(5, False)
+        self.ui.tabs_main.setTabEnabled(6, False)
     
     def enable_robot_tabs(self):
         self.ui.tabs_main.setTabEnabled(2, True)
         self.ui.tabs_main.setTabEnabled(3, True)
         self.ui.tabs_main.setTabEnabled(4, True)
         self.ui.tabs_main.setTabEnabled(5, True)
+        self.ui.tabs_main.setTabEnabled(6, True)
 
     def start_task(self, task: Task):
         self.tasks.append(task)
@@ -1046,7 +1048,8 @@ class DeployToolWindow(QMainWindow):
         if path == "" or path == None:
             dialog = QMessageBox(parent=self)
             dialog.setIcon(QMessageBox.Warning)
-            dialog.setText(self.tr("The selected player was not found on your system. Download and install the player and make sure the command is in your system path. You will need to restart the deploy tool after chaning the path environment variable."))
+            dialog.setTextFormat(Qt.RichText)
+            dialog.setText(self.tr("<p>The selected player was not found on your system. Download and install the player and make sure the command is in your system path. You will need to restart the deploy tool after chaning the path environment variable.</p><p>You can also use the system package manager (on Linux) or a third party one (<a href=\"https://scoop.sh/\">scoop</a> or <a href=\"https://chocolatey.org/\">chocolatey</a> on Windows or <a href=\"https://brew.sh\">homebrew</a> on macOS) to install the packages. Typically the packages are named ffmpeg (includes ffplay), mpv, and mplayer respectively.</p>"))
             dialog.setWindowTitle(self.tr("Player not found"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
