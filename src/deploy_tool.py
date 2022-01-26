@@ -1,5 +1,6 @@
 
 import socket
+import re
 from threading import local
 import traceback
 from typing import Any, Callable, List, Optional
@@ -209,6 +210,8 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_change_hostname.clicked.connect(self.apply_hostname)
 
         self.ui.btn_new_camstream.clicked.connect(self.new_camstream)
+        self.ui.btn_delete_camstream.clicked.connect(self.delete_camstream)
+        self.ui.btn_edit_camstream.clicked.connect(self.edit_camstream)
         self.ui.combox_camstream_player.currentTextChanged.connect(self.change_player_download_link)
         self.ui.btn_play_camstream.clicked.connect(self.play_stream)
 
@@ -301,6 +304,54 @@ class DeployToolWindow(QMainWindow):
         else:
             return 3
 
+    ############################################################################
+    # SFTP Functions
+    ############################################################################
+    def sftp_upload_file(self, sftp: SFTPClient, local_file: str, remote_dest: str):
+        # Note: remote_dest is a directory and must exist
+        sftp.put(local_file, "{0}/{1}".format(remote_dest, os.path.basename(local_file)))
+
+    def sftp_mkdir_recursive(self, sftp: SFTPClient, remote_directory: str):
+        remote_directory.replace("\\", "/")
+        if remote_directory == '/':
+            sftp.chdir('/')
+            return
+        if remote_directory == '':
+            return
+        try:
+            sftp.chdir(remote_directory)
+        except IOError:
+            dirname, basename = os.path.split(remote_directory.rstrip('/'))
+            self.sftp_mkdir_recursive(sftp, dirname)
+            sftp.mkdir(basename)
+            sftp.chdir(basename)
+            return True
+
+    def sftp_upload_directory(self, sftp: SFTPClient, local_dir: str, remote_dest: str):
+        # Note: remote_dest is a directory and must exist
+        # The local directory is recursively uploaded to the remote location
+
+        # Use only forward slashes. Remove trailing slash as it messes up os.path.basename
+        local_dir = local_dir.replace("\\", "/").rstrip("/")
+
+        remote_dest = "{0}/{1}".format(remote_dest, os.path.basename(local_dir))
+
+        # Copy each item in this directory recursively
+        for root, dirs, files in os.walk(local_dir):
+            for file in files:
+                local_file = "{0}/{1}".format(root, file).replace("\\", "/")
+                remote_file = local_file.replace(local_dir, remote_dest)
+                self.sftp_mkdir_recursive(sftp, os.path.dirname(remote_file))
+                sftp.put(local_file, remote_file)
+            for dir in dirs:
+                local_file = os.path.join(root, dir).replace("\\", "/")
+                remote_file = local_file.replace(local_dir, remote_dest)
+                self.sftp_upload_directory(sftp, local_file, os.path.dirname(remote_file))   
+
+    def sftp_list_directory(self, sftp: SFTPClient, remote_dir: str) -> List[str]:
+        dirs = sftp.listdir(remote_dir)
+        dirs.sort()
+        return dirs
 
     ############################################################################
     # This PC tab
@@ -577,47 +628,6 @@ class DeployToolWindow(QMainWindow):
         for match in base_path_obj.glob(expression):
             matches.append(str(match))
         return matches
-
-    def sftp_upload_file(self, sftp: SFTPClient, local_file: str, remote_dest: str):
-        # Note: remote_dest is a directory and must exist
-        sftp.put(local_file, "{0}/{1}".format(remote_dest, os.path.basename(local_file)))
-
-    def sftp_mkdir_recursive(self, sftp: SFTPClient, remote_directory: str):
-        remote_directory.replace("\\", "/")
-        if remote_directory == '/':
-            sftp.chdir('/')
-            return
-        if remote_directory == '':
-            return
-        try:
-            sftp.chdir(remote_directory)
-        except IOError:
-            dirname, basename = os.path.split(remote_directory.rstrip('/'))
-            self.sftp_mkdir_recursive(sftp, dirname)
-            sftp.mkdir(basename)
-            sftp.chdir(basename)
-            return True
-
-    def sftp_upload_directory(self, sftp: SFTPClient, local_dir: str, remote_dest: str):
-        # Note: remote_dest is a directory and must exist
-        # The local directory is recursively uploaded to the remote location
-
-        # Use only forward slashes. Remove trailing slash as it messes up os.path.basename
-        local_dir = local_dir.replace("\\", "/").rstrip("/")
-
-        remote_dest = "{0}/{1}".format(remote_dest, os.path.basename(local_dir))
-
-        # Copy each item in this directory recursively
-        for root, dirs, files in os.walk(local_dir):
-            for file in files:
-                local_file = "{0}/{1}".format(root, file).replace("\\", "/")
-                remote_file = local_file.replace(local_dir, remote_dest)
-                self.sftp_mkdir_recursive(sftp, os.path.dirname(remote_file))
-                sftp.put(local_file, remote_file)
-            for dir in dirs:
-                local_file = os.path.join(root, dir).replace("\\", "/")
-                remote_file = local_file.replace(local_dir, remote_dest)
-                self.sftp_upload_directory(sftp, local_file, os.path.dirname(remote_file))   
 
     def do_deploy_program(self, proj_folder: str):
 
@@ -1010,12 +1020,86 @@ class DeployToolWindow(QMainWindow):
     # Camera streaming tab
     ############################################################################
     
+    def write_camstream_config(self, name: str, config: str):
+        orig_state = self.do_writable_check()
+        if orig_state != WritableState.ReadWrite:
+            self.make_robot_writable()
+        
+        sftp = None
+        try:
+            sftp = self.ssh.open_sftp()
+            with sftp.open("/home/pi/camstream/{0}.txt".format(name), "w") as file:
+                file.write(config.encode())
+            sftp.close()
+        except (SSHException, SFTPError):
+            if sftp is not None:
+                sftp.close()
+        
+        if orig_state == WritableState.Readonly:
+            self.make_robot_readonly()
+
     def new_camstream(self):
         dialog = CamstreamDialog(self)
         res = dialog.exec()
         if res == QDialog.Accepted:
+            name = dialog.get_config_name()
             config = dialog.to_config()
-            # TODO: Write on robot filesystem
+            self.write_camstream_config(name, config)
+            self.populate_streams()
+    
+    def delete_camstream(self):
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Question)
+        dialog.setText(self.tr("Are you sure you want to delete '{0}'?".format(self.ui.combox_stream_source.currentText())))
+        dialog.setWindowTitle(self.tr("Confirm Delete"))
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        res = dialog.exec()
+        if res == QMessageBox.Yes:
+            orig_state = self.do_writable_check()
+            if orig_state != WritableState.ReadWrite:
+                self.make_robot_writable()
+
+            sftp = None
+            try:
+                sftp = self.ssh.open_sftp()
+                sftp.remove("/home/pi/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText()))
+                sftp.close()
+            except (SSHException, SFTPError):
+                if sftp is not None:
+                    sftp.close()
+
+            if orig_state == WritableState.Readonly:
+                self.make_robot_readonly()
+
+            self.populate_streams()
+    
+    def edit_camstream(self):
+        if self.ui.combox_stream_source.currentText() != "":
+            sftp = None
+            try:
+                sftp = self.ssh.open_sftp()
+                with sftp.open("/home/pi/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText()), "r") as file:
+                    config = file.read().decode()
+                dialog = CamstreamDialog(self)
+                dialog.set_config_name(self.ui.combox_stream_source.currentText())
+                dialog.disable_edit_config_name()
+                dialog.from_config(config)
+                res = dialog.exec()
+                if res == QDialog.Accepted:
+                    name = dialog.get_config_name()
+                    new_config = dialog.to_config()
+                    self.write_camstream_config(name, new_config)
+                sftp.close()
+            except (SSHException, SFTPError):
+                if sftp is not None:
+                    sftp.close()
+                dialog = QMessageBox(parent=self)
+                dialog.setIcon(QMessageBox.Warning)
+                dialog.setTextFormat(Qt.RichText)
+                dialog.setText(self.tr("Error reading config file for the selected stream!"))
+                dialog.setWindowTitle(self.tr("SFTP Error"))
+                dialog.setStandardButtons(QMessageBox.Ok)
+                dialog.exec()
     
     def change_player_download_link(self, text: str):
         if text == self.tr("ffplay"):
@@ -1026,16 +1110,27 @@ class DeployToolWindow(QMainWindow):
             self.ui.lbl_camstream_download.setText("<a href=\"http://www.mplayerhq.hu/design7/news.html\">Download Player</a>")
 
     def populate_streams(self):
-        # TODO: Do this for real
-        streams = ["ExampleA", "ExampleB", "ExampleC"]
+        # Load list of streams from the remote device
+        sftp = None
+        try:
+            sftp = self.ssh.open_sftp()
+            paths = self.sftp_list_directory(sftp, "/home/pi/camstream/")
+            sftp.close()
+        except (SSHException, SFTPError):
+            paths = []
+            if sftp is not None:
+                sftp.close()
+
+        streams = []
+        for entry in paths:
+            if entry.endswith(".txt"):
+                streams.append(entry.removesuffix(".txt"))
 
         # Clear old items
-        self.ui.lst_streams.clear()
         self.ui.combox_stream_source.clear()
         
         # Add items
         for stream in streams:
-            self.ui.lst_streams.addItem(stream)
             self.ui.combox_stream_source.addItem(stream)
 
     def play_stream(self):
@@ -1062,3 +1157,5 @@ class DeployToolWindow(QMainWindow):
             dialog.setWindowTitle(self.tr("Cannot Play Stream"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+        
+        # TODO: Construct args and invoke playstream.py script

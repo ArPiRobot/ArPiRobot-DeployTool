@@ -94,6 +94,11 @@ QMenuBar::item:selected {
     border-radius: 3px;
 }
 
+.QLineEdit:disabled{
+    color: @text_color_disabled@;
+    background-color: @bg_color_field_disabled@;
+}
+
 .QTextEdit{
     color: @text_color@;
     selection-color: @text_color@;

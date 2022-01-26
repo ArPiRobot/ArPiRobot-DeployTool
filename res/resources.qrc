@@ -4,6 +4,7 @@
     <file>version.txt</file>
     <file>license_text.txt</file>
     <file>third_party_licenses.txt</file>
+    <file>playstream.py</file>
 
     <!--Custom Theme-->
 

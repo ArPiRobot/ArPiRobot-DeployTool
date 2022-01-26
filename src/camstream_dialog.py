@@ -31,9 +31,68 @@ class CamstreamDialog(QDialog):
         else:
             return super().accept()
     
+    def disable_edit_config_name(self):
+        self.ui.txt_config_name.setEnabled(False)
+
+    def set_config_name(self, name: str):
+        self.ui.txt_config_name.setText(name)
+    
+    def get_config_name(self) -> str:
+        return self.ui.txt_config_name.text()
+
     def from_config(self, config: str):
         # Parse a config file and populate the UI from it
-        pass
+        config = re.sub("\s", " ", config)
+        items = config.split(" ")
+        vflip = False
+        hflip = False
+        for i in range(len(items)):
+            if items[i] == "--driver":
+                self.ui.combox_driver.setCurrentText(items[i+1])
+            elif items[i] == "--device":
+                self.ui.txt_device.setText(items[i+1])
+            elif items[i] == "--iomode":
+                self.ui.combox_iomode.setCurrentText(items[i+1])
+            elif items[i] == "--width":
+                self.ui.txt_width.setText(items[i+1])
+            elif items[i] == "--height":
+                self.ui.txt_height.setText(items[i+1])
+            elif items[i] == "--framerate":
+                self.ui.txt_framerate.setText(items[i+1])
+            elif items[i] == "--vflip":
+                vflip = True
+            elif items[i] == "--hflip":
+                hflip = True
+            elif items[i] == "--rotate":
+                self.ui.combox_rotate.setCurrentText("{0}°".format(items[i+1]))
+            elif items[i] == "--gain":
+                self.ui.txt_gain.setText(items[i+1])
+            elif items[i] == "--format":
+                self.ui.combox_format.setCurrentText(items[i+1])
+            elif items[i] == "--h264encoder":
+                self.ui.combox_encoder.setCurrentText(items[i+1])
+            elif items[i] == "--profile":
+                self.ui.combox_profile.setCurrentText(items[i+1])
+            elif items[i] == "--bitrate":
+                self.ui.txt_bitrate.setText(items[i+1])
+            elif items[i] == "--quality":
+                self.ui.txt_quality.setText(items[i+1])
+            elif items[i] == "--netmode":
+                self.ui.combox_netmode.setCurrentText(items[i+1])
+            elif items[i] == "--address":
+                self.ui.txt_address.setText(items[i+1])
+            elif items[i] == "--port":
+                self.ui.txt_port.setText(items[i+1])
+            elif items[i] == "--rtspkey":
+                self.ui.txt_rtspkey.setText(items[i+1])
+        if not vflip and not hflip:
+            self.ui.combox_flip.setCurrentText("None")
+        elif vflip and not hflip:
+            self.ui.combox_flip.setCurrentText("Vertical")
+        elif not vflip and hflip:
+            self.ui.combox_flip.setCurrentText("Horizontal")
+        else:
+            self.ui.combox_flip.setCurrentText("Both")
 
     def to_config(self) -> str:
         # Converts the settings from the UI into a config file for the ArPiRobot-Camstream service
