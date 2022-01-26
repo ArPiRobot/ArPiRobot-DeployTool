@@ -21,6 +21,7 @@ from zipfile import ZipFile
 import time
 import os
 import subprocess
+import sys
 import shutil
 import json
 import pathlib
@@ -214,6 +215,12 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_edit_camstream.clicked.connect(self.edit_camstream)
         self.ui.combox_camstream_player.currentTextChanged.connect(self.change_player_download_link)
         self.ui.btn_play_camstream.clicked.connect(self.play_stream)
+        self.ui.btn_camstream_start.clicked.connect(self.start_camstream)
+        self.ui.btn_camstream_stop.clicked.connect(self.stop_camstream)
+        self.ui.btn_rtsp_start.clicked.connect(self.start_rtsp)
+        self.ui.btn_rtsp_stop.clicked.connect(self.stop_rtsp)
+        self.ui.cbx_camstream_boot.clicked.connect(self.enable_camstream_changed)
+        self.ui.cbx_enable_rtsp.clicked.connect(self.enable_rtsp_changed)
 
         # Startup
         self.disable_robot_tabs()
@@ -252,6 +259,11 @@ class DeployToolWindow(QMainWindow):
         self.ui.tabs_main.setTabEnabled(4, False)
         self.ui.tabs_main.setTabEnabled(5, False)
         self.ui.tabs_main.setTabEnabled(6, False)
+
+        # Robot disconnected. Can edit these now
+        self.ui.txt_address.setEnabled(True)
+        self.ui.txt_username.setEnabled(True)
+        self.ui.txt_password.setEnabled(True)
     
     def enable_robot_tabs(self):
         self.ui.tabs_main.setTabEnabled(2, True)
@@ -259,6 +271,11 @@ class DeployToolWindow(QMainWindow):
         self.ui.tabs_main.setTabEnabled(4, True)
         self.ui.tabs_main.setTabEnabled(5, True)
         self.ui.tabs_main.setTabEnabled(6, True)
+
+        # While conencted to robot don't allow editing these
+        self.ui.txt_address.setEnabled(False)
+        self.ui.txt_username.setEnabled(False)
+        self.ui.txt_password.setEnabled(False)
 
     def start_task(self, task: Task):
         self.tasks.append(task)
@@ -1011,7 +1028,7 @@ class DeployToolWindow(QMainWindow):
     def apply_hostname(self):
         self.show_progress(self.tr("Changing Hostname"), self.tr("Changing robot hostname..."))
         task = Task(self, self.do_apply_hostname, self.ui.txt_hostname.text())
-        task.task_exception.connect(self.hide_progress())
+        task.task_exception.connect(self.hide_progress)
         task.task_complete.connect(self.post_apply_reboot)
         self.start_task(task)
 
@@ -1109,7 +1126,7 @@ class DeployToolWindow(QMainWindow):
         elif text == self.tr("mplayer"):
             self.ui.lbl_camstream_download.setText("<a href=\"http://www.mplayerhq.hu/design7/news.html\">Download Player</a>")
 
-    def populate_streams(self):
+    def do_populate_streams(self):
         # Load list of streams from the remote device
         sftp = None
         try:
@@ -1132,6 +1149,70 @@ class DeployToolWindow(QMainWindow):
         # Add items
         for stream in streams:
             self.ui.combox_stream_source.addItem(stream)
+        
+        # Check if services are running
+        _, stdout, _ = self.ssh.exec_command("sudo systemctl is-enabled camstream.service")
+        stdout.channel.recv_exit_status()
+        data = stdout.read().decode().strip().lower()
+        self.ui.cbx_camstream_boot.setChecked(data == "enabled")
+
+        _, stdout, _ = self.ssh.exec_command("sudo systemctl is-enabled rtsp-simple-server.service")
+        stdout.channel.recv_exit_status()
+        data = stdout.read().decode().strip().lower()
+        self.ui.cbx_enable_rtsp.setChecked(data == "enabled")
+
+    def populate_streams(self):
+        self.show_progress(self.tr("Loading"), self.tr("Loading info from robot..."))
+        task = Task(self, self.do_populate_streams)
+        task.task_complete.connect(lambda res: self.hide_progress())
+        task.task_exception.connect(lambda e: self.hide_progress())
+        self.start_task(task)
+
+    def start_camstream(self):
+        _, stdout, _ = self.ssh.exec_command("sudo systemctl start camstream.service")
+        stdout.channel.recv_exit_status()
+
+    def stop_camstream(self):
+        _, stdout, _ = self.ssh.exec_command("sudo systemctl stop camstream.service")
+        stdout.channel.recv_exit_status()
+
+    def start_rtsp(self):
+        _, stdout, _ = self.ssh.exec_command("sudo systemctl start rtsp-simple-server.service")
+        stdout.channel.recv_exit_status()
+
+    def stop_rtsp(self):
+        _, stdout, _ = self.ssh.exec_command("sudo systemctl stop rtsp-simple-server.service")
+        stdout.channel.recv_exit_status()
+
+    def do_enable_camstream_changed(self, state: int):
+        if state == Qt.Checked:
+            _, stdout, _ = self.ssh.exec_command("sudo systemctl enable camstream.service")
+            stdout.channel.recv_exit_status()
+        else:
+            _, stdout, _ = self.ssh.exec_command("sudo systemctl disable camstream.service")
+            stdout.channel.recv_exit_status()
+
+    def enable_camstream_changed(self, checked: bool):
+        self.show_progress(self.tr("Modifying system services"), self.tr("Changing boot services..."))
+        task = Task(self, self.do_enable_camstream_changed, self.ui.cbx_camstream_boot.checkState())
+        task.task_complete.connect(lambda res: self.hide_progress())
+        task.task_exception.connect(lambda e: self.hide_progress())
+        self.start_task(task)
+    
+    def do_enable_rtsp_changed(self, state: int):
+        if state == Qt.Checked:
+            _, stdout, _ = self.ssh.exec_command("sudo systemctl enable rtsp-simple-server.service")
+            stdout.channel.recv_exit_status()
+        else:
+            _, stdout, _ = self.ssh.exec_command("sudo systemctl disable rtsp-simple-server.service")
+            stdout.channel.recv_exit_status()
+    
+    def enable_rtsp_changed(self, checked: bool):
+        self.show_progress(self.tr("Modifying system services"), self.tr("Changing boot services..."))
+        task = Task(self, self.do_enable_rtsp_changed, self.ui.cbx_enable_rtsp.checkState())
+        task.task_complete.connect(lambda res: self.hide_progress())
+        task.task_exception.connect(lambda e: self.hide_progress())
+        self.start_task(task)
 
     def play_stream(self):
         # Check to make sure player is installed
@@ -1148,6 +1229,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setWindowTitle(self.tr("Player not found"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+            return
         
         # Make sure a stream is selected
         if stream == "":
@@ -1157,5 +1239,88 @@ class DeployToolWindow(QMainWindow):
             dialog.setWindowTitle(self.tr("Cannot Play Stream"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+            return
+
+        sftp = None
+        try:
+            sftp = self.ssh.open_sftp()
+            with sftp.open("/home/pi/camstream/{0}.txt".format(stream), "r") as file:
+                selected_config = file.read().decode()
+            sftp.close()
+        except (SSHException, SFTPError):
+            if sftp is not None:
+                sftp.close()
+
+        # Parse selected config to determine arguments for the playback script
+        selected_config = re.sub("\s", " ", selected_config)
+        items = selected_config.split(" ")
+
+        netmode = "rtsp"
+        port = ""
+        rtsp_key = "stream"
+        format = "h264"
+        framerate = 30
+        for i in range(len(items)):
+            if items[i] == "--netmode":
+                netmode = items[i+1]
+            elif items[i] == "--port":
+                port = items[i+1]
+            elif items[i] == "--rtspkey":
+                rtsp_key = items[i+1]
+            elif items[i] == "--format":
+                format = items[i+1]
+            elif items[i] == "--framerate":
+                try:
+                    framerate = int(items[i+1])
+                except:
+                    pass
         
-        # TODO: Construct args and invoke playstream.py script
+        # Double framerate for playback if enabled
+        if self.ui.cbx_camstream_2fr.isChecked():
+            framerate *= 2
+
+        # Determine address from netmode setting
+        if netmode == "rtsp":
+            address = self.ui.txt_address.text()
+            if port == "":
+                port = "8554"
+        elif netmode == "tcp":
+            address = self.ui.txt_address.text()
+            if port == "":
+                port = "5008"
+        elif netmode == "udp":
+            address = "127.0.0.1"
+            if port == "":
+                port = "5008"
+
+        play_args = []
+        play_args.extend(["--netmode", netmode])
+        play_args.extend(["--address", address])
+        play_args.extend(["--port", port])
+        if netmode == "rtsp":
+            play_args.extend(["--rtspkey", rtsp_key])
+        play_args.extend(["--format", format])
+        play_args.extend(["--framerate", str(framerate)])
+        play_args.extend(["--player", player])
+
+        playscript = QFile(":/playstream.py")
+        if playscript.open(QIODevice.ReadOnly):
+            read_data = bytes(playscript.readAll())
+            playscript.close()
+        else:
+            dialog = QMessageBox(parent=self)
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(self.tr("Unable to access playback script."))
+            dialog.setWindowTitle(self.tr("Cannot Play Stream"))
+            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.exec()
+            return
+        cmd = [sys.executable]
+        cmd.extend(["-c", read_data.decode()])
+        cmd.extend(play_args)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        subprocess.Popen(cmd, shell=False, startupinfo=startupinfo)
+        
+        
+        
