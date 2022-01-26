@@ -1010,7 +1010,10 @@ class DeployToolWindow(QMainWindow):
     
     def new_camstream(self):
         dialog = CamstreamDialog(self)
-        dialog.exec()
+        res = dialog.exec()
+        if res == QDialog.Accepted:
+            config = dialog.to_config()
+            # TODO: Write on robot filesystem
     
     def change_player_download_link(self, text: str):
         if text == self.tr("ffplay"):
@@ -1025,10 +1028,8 @@ class DeployToolWindow(QMainWindow):
         streams = ["ExampleA", "ExampleB", "ExampleC"]
 
         # Clear old items
-        for i in range(self.ui.lst_streams.count()):
-            self.ui.lst_streams.removeItemWidget(self.ui.lst_streams.item(i))
-        for i in range(self.ui.combox_stream_source.count()):
-            self.ui.combox_stream_source.removeItem(i)
+        self.ui.lst_streams.clear()
+        self.ui.combox_stream_source.clear()
         
         # Add items
         for stream in streams:
