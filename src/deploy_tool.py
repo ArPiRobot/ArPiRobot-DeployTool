@@ -11,6 +11,7 @@ from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTPClient
 from camstream_dialog import CamstreamDialog
+from playstream_dialog import PlayStreamDialog
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
@@ -176,6 +177,9 @@ class DeployToolWindow(QMainWindow):
 
         # Active background tasks
         self.tasks: List[Task] = []
+
+        # Active dialogs for playing streams
+        self.camstreams: List[PlayStreamDialog] = []
 
         # Signal / Slot setup
         self.change_progress_msg_sig.connect(self.do_change_progress_msg)
@@ -1292,35 +1296,86 @@ class DeployToolWindow(QMainWindow):
             address = "127.0.0.1"
             if port == "":
                 port = "5008"
-
-        play_args = []
-        play_args.extend(["--netmode", netmode])
-        play_args.extend(["--address", address])
-        play_args.extend(["--port", port])
-        if netmode == "rtsp":
-            play_args.extend(["--rtspkey", rtsp_key])
-        play_args.extend(["--format", format])
-        play_args.extend(["--framerate", str(framerate)])
-        play_args.extend(["--player", player])
-
-        playscript = QFile(":/playstream.py")
-        if playscript.open(QIODevice.ReadOnly):
-            read_data = bytes(playscript.readAll())
-            playscript.close()
-        else:
-            dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
-            dialog.setText(self.tr("Unable to access playback script."))
-            dialog.setWindowTitle(self.tr("Cannot Play Stream"))
-            dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
-            return
-        cmd = [sys.executable]
-        cmd.extend(["-c", read_data.decode()])
-        cmd.extend(play_args)
+        
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        subprocess.Popen(cmd, shell=False, startupinfo=startupinfo)
+        cmd = self.construct_play_command(address, netmode, port, rtsp_key, player, framerate, format)
+        print(cmd)
+        p = subprocess.Popen(cmd, startupinfo=startupinfo, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        pdialog = PlayStreamDialog("Playing Stream", "Playing stream '{0}' using {1}...".format(stream, player), p, self)
+        self.camstreams.append(pdialog)
+        pdialog.finished.connect(lambda res: self.camstreams.remove(pdialog))
+        pdialog.open()
+    
+    def construct_play_command(self, address, netmode, port, rtspkey, player, framerate, format):
+        if address == "auto":
+            if netmode == "udp":
+                address = "127.0.0.1"
+            else:
+                address = "192.168.10.1"
         
+        if port == 0:
+            if netmode == "rtsp":
+                port = 8554
+            else:
+                port = 5008
+
+        if netmode == "tcp":
+            url = "tcp://{0}:{1}".format(address, port)
+        elif netmode == "udp":
+            url = "udp://{0}:{1}".format(address, port)
+        elif netmode == "rtsp":
+            url = "rtsp://{0}:{1}/{2}".format(address, port, rtspkey)
+        else:
+            print("ERROR: Unknown netmode.")
+
+        if player == "auto":
+            if shutil.which("ffplay") is not None:
+                player = "ffplay"
+            elif shutil.which("mpv") is not None:
+                player = "mpv"
+            elif shutil.which("mplayer") is not None:
+                player = "mplayer"
+            else:
+                print("ERROR: No player found. Install either ffplay, mpv, or mplayer and make sure it is in your PATH.")
+
+        if player == "ffplay":
+            if not shutil.which("ffplay"):
+                print("ERROR: ffplay not found. Install ffmpeg and ensure ffplay is in your PATH.")
+            
+            if netmode != "rtsp":
+                cmd = "ffplay -probesize 32 -framerate {fps} -fflags nobuffer -flags low_delay -framedrop -sync ext {url}".format(fps=framerate, url=url)
+            else:
+                # Cannot use -framerate with rtsp
+                cmd = "ffplay -probesize 32 -fflags nobuffer -flags low_delay -framedrop -sync ext {url}".format(url=url)
+                    
+        if player == "mpv":
+            if not shutil.which("mpv"):
+                print("ERROR: mpv not found. Install mpv and ensure it is in your PATH.")
+            
+            # MPV cannot reliably detect MJPEG and rejects the stream by default
+            # Using --demuxer-lavf-probescore=10 fixes this
+            if format == "h264":
+                extra = ""
+            else:
+                extra = "--demuxer-lavf-probescore=10"
+
+            cmd = "mpv --no-cache --untimed --profile=low-latency --no-correct-pts --fps={fps} --osc=no {extra} {url}".format(fps=framerate, url=url, extra=extra)
+        
+        if player == "mplayer":
+            if not shutil.which("mplayer"):
+                print("ERROR: mplayer not found. Install mplayer and ensure it is in your PATH.")
+            if url.startswith("tcp") or url.startswith("udp"):
+                url = "ffmpeg://{0}".format(url)
+            
+            if format == "auto":
+                print("ERROR: mplayer cannot auto detect format. Specify a format using --format")
+            elif format == "mjpeg":
+                cmd = "mplayer -benchmark -nocache -fps {fps} -demuxer lavf {url}".format(fps=framerate, url=url)
+            elif format == "h264":
+                cmd = "mplayer -benchmark -nocache -fps {fps} -demuxer h264es {url}".format(fps=framerate, url=url)
+            else:
+                print("ERROR: Unknown format specified.")
+        return cmd
         
         
