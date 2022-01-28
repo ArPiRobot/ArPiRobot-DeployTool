@@ -1052,7 +1052,8 @@ class DeployToolWindow(QMainWindow):
             with sftp.open("/home/pi/camstream/{0}.txt".format(name), "w") as file:
                 file.write(config.encode())
             sftp.close()
-        except (SSHException, SFTPError):
+        except (SSHException, SFTPError) as e:
+            print(e)
             if sftp is not None:
                 sftp.close()
         
@@ -1085,7 +1086,8 @@ class DeployToolWindow(QMainWindow):
                 sftp = self.ssh.open_sftp()
                 sftp.remove("/home/pi/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText()))
                 sftp.close()
-            except (SSHException, SFTPError):
+            except (SSHException, SFTPError) as e:
+                print(e)
                 if sftp is not None:
                     sftp.close()
 
@@ -1111,7 +1113,8 @@ class DeployToolWindow(QMainWindow):
                     new_config = dialog.to_config()
                     self.write_camstream_config(name, new_config)
                 sftp.close()
-            except (SSHException, SFTPError):
+            except (SSHException, SFTPError) as e:
+                print(e)
                 if sftp is not None:
                     sftp.close()
                 dialog = QMessageBox(parent=self)
@@ -1137,15 +1140,17 @@ class DeployToolWindow(QMainWindow):
             sftp = self.ssh.open_sftp()
             paths = self.sftp_list_directory(sftp, "/home/pi/camstream/")
             sftp.close()
-        except (SSHException, SFTPError):
+        except (SSHException, SFTPError) as e:
+            print(e)
             paths = []
             if sftp is not None:
                 sftp.close()
-
+            return
+        
         streams = []
         for entry in paths:
             if entry.endswith(".txt"):
-                streams.append(entry.removesuffix(".txt"))
+                streams.append(entry[:-4])
 
         # Clear old items
         self.ui.combox_stream_source.clear()
@@ -1165,11 +1170,15 @@ class DeployToolWindow(QMainWindow):
         data = stdout.read().decode().strip().lower()
         self.ui.cbx_enable_rtsp.setChecked(data == "enabled")
 
+    def handle_popstreams_exc(self, e):
+        self.hide_progress()
+        print(e)
+
     def populate_streams(self):
         self.show_progress(self.tr("Loading"), self.tr("Loading info from robot..."))
         task = Task(self, self.do_populate_streams)
         task.task_complete.connect(lambda res: self.hide_progress())
-        task.task_exception.connect(lambda e: self.hide_progress())
+        task.task_exception.connect(self.handle_popstreams_exc)
         self.start_task(task)
 
     def start_camstream(self):
@@ -1251,7 +1260,8 @@ class DeployToolWindow(QMainWindow):
             with sftp.open("/home/pi/camstream/{0}.txt".format(stream), "r") as file:
                 selected_config = file.read().decode()
             sftp.close()
-        except (SSHException, SFTPError):
+        except (SSHException, SFTPError) as e:
+            print(e)
             if sftp is not None:
                 sftp.close()
 
