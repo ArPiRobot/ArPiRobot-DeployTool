@@ -46,6 +46,7 @@ class CamstreamDialog(QDialog):
         items = config.split(" ")
         vflip = False
         hflip = False
+        self.ui.combox_vconvert.setCurrentText(self.tr("Disabled"))
         for i in range(len(items)):
             if items[i] == "--driver":
                 self.ui.combox_driver.setCurrentText(items[i+1])
@@ -53,6 +54,8 @@ class CamstreamDialog(QDialog):
                 self.ui.txt_device.setText(items[i+1])
             elif items[i] == "--iomode":
                 self.ui.combox_iomode.setCurrentText(items[i+1])
+            elif items[i] == "--vconvert":
+                self.ui.combox_vconvert.setCurrentText(self.tr("Enabled"))
             elif items[i] == "--width":
                 self.ui.txt_width.setText(items[i+1])
             elif items[i] == "--height":
@@ -103,6 +106,7 @@ class CamstreamDialog(QDialog):
             "--driver {driver}\n"
             "--device {device}\n"
             "--iomode {iomode}\n"
+            "{vconvert}\n"
             "--width {width}\n"
             "--height {height}\n"
             "--framerate {framerate}\n"
@@ -123,6 +127,7 @@ class CamstreamDialog(QDialog):
             driver = self.ui.combox_driver.currentText(),
             device = self.ui.txt_device.text(),
             iomode = self.ui.combox_iomode.currentText(),
+            vconvert = "--vconvert" if self.ui.combox_vconvert.currentText() == self.tr("Enabled") else "",
             width = self.ui.txt_width.text(),
             height = self.ui.txt_height.text(),
             framerate = self.ui.txt_framerate.text(),

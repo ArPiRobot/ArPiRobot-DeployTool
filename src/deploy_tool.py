@@ -11,6 +11,7 @@ from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTPClient
 from camstream_dialog import CamstreamDialog
+from log_dialog import LogDialog
 from playstream_dialog import PlayStreamDialog
 from ui_deploy_tool import Ui_DeployTool
 from about_dialog import AboutDialog
@@ -225,6 +226,8 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_rtsp_stop.clicked.connect(self.stop_rtsp)
         self.ui.cbx_camstream_boot.clicked.connect(self.enable_camstream_changed)
         self.ui.cbx_enable_rtsp.clicked.connect(self.enable_rtsp_changed)
+        self.ui.btn_camstream_log.clicked.connect(self.show_camstream_log)
+        self.ui.btn_rtsp_log.clicked.connect(self.show_rtsp_log)
 
         # Startup
         self.disable_robot_tabs()
@@ -1198,12 +1201,19 @@ class DeployToolWindow(QMainWindow):
         stdout.channel.recv_exit_status()
 
     def do_enable_camstream_changed(self, state: int):
+        orig_state = self.do_writable_check()
+        if orig_state != WritableState.ReadWrite:
+            self.make_robot_writable()
+
         if state == Qt.Checked:
             _, stdout, _ = self.ssh.exec_command("sudo systemctl enable camstream.service")
             stdout.channel.recv_exit_status()
         else:
             _, stdout, _ = self.ssh.exec_command("sudo systemctl disable camstream.service")
             stdout.channel.recv_exit_status()
+        
+        if orig_state == WritableState.Readonly:
+            self.make_robot_readonly()
 
     def enable_camstream_changed(self, checked: bool):
         self.show_progress(self.tr("Modifying system services"), self.tr("Changing boot services..."))
@@ -1213,12 +1223,19 @@ class DeployToolWindow(QMainWindow):
         self.start_task(task)
     
     def do_enable_rtsp_changed(self, state: int):
+        orig_state = self.do_writable_check()
+        if orig_state != WritableState.ReadWrite:
+            self.make_robot_writable()
+        
         if state == Qt.Checked:
             _, stdout, _ = self.ssh.exec_command("sudo systemctl enable rtsp-simple-server.service")
             stdout.channel.recv_exit_status()
         else:
             _, stdout, _ = self.ssh.exec_command("sudo systemctl disable rtsp-simple-server.service")
             stdout.channel.recv_exit_status()
+        
+        if orig_state == WritableState.Readonly:
+            self.make_robot_readonly()
     
     def enable_rtsp_changed(self, checked: bool):
         self.show_progress(self.tr("Modifying system services"), self.tr("Changing boot services..."))
@@ -1388,4 +1405,18 @@ class DeployToolWindow(QMainWindow):
                 print("ERROR: Unknown format specified.")
         return cmd
         
-        
+    def show_camstream_log(self):
+        _, stdout, _ = self.ssh.exec_command("sudo journalctl --no-pager -u camstream.service")
+        stdout.channel.recv_exit_status()
+
+        dialog = LogDialog(self, "Camstream Log", stdout.read().decode())
+        dialog.exec()
+
+    def show_rtsp_log(self):
+        _, stdout, _ = self.ssh.exec_command("sudo journalctl --no-pager -u rtsp-simple-server.service")
+        stdout.channel.recv_exit_status()
+
+        dialog = LogDialog(self, "RTSP Log", stdout.read().decode())
+        dialog.exec()
+
+

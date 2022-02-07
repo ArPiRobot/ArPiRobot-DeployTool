@@ -40,7 +40,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>6</number>
       </property>
       <widget class="QWidget" name="tab_thispc">
        <attribute name="title">
@@ -977,10 +977,10 @@
               <property name="spacing">
                <number>3</number>
               </property>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="btn_rtsp_start">
+              <item row="3" column="1">
+               <widget class="QPushButton" name="btn_rtsp_stop">
                 <property name="text">
-                 <string>Start RTSP Server</string>
+                 <string>Stop RTSP Server</string>
                 </property>
                </widget>
               </item>
@@ -991,6 +991,27 @@
                 </property>
                </widget>
               </item>
+              <item row="5" column="0">
+               <widget class="QCheckBox" name="cbx_camstream_boot">
+                <property name="text">
+                 <string>Start Streams on Boot</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QCheckBox" name="cbx_enable_rtsp">
+                <property name="text">
+                 <string>Start RTSP Server at Boot</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="btn_rtsp_start">
+                <property name="text">
+                 <string>Start RTSP Server</string>
+                </property>
+               </widget>
+              </item>
               <item row="3" column="0">
                <widget class="QPushButton" name="btn_camstream_stop">
                 <property name="text">
@@ -998,24 +1019,17 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="btn_rtsp_stop">
-                <property name="text">
-                 <string>Stop RTSP Server</string>
-                </property>
-               </widget>
-              </item>
               <item row="4" column="0">
-               <widget class="QCheckBox" name="cbx_camstream_boot">
+               <widget class="QPushButton" name="btn_camstream_log">
                 <property name="text">
-                 <string>Start Streams on Boot</string>
+                 <string>Show Streams Log</string>
                 </property>
                </widget>
               </item>
               <item row="4" column="1">
-               <widget class="QCheckBox" name="cbx_enable_rtsp">
+               <widget class="QPushButton" name="btn_rtsp_log">
                 <property name="text">
-                 <string>Start RTSP Server at Boot</string>
+                 <string>Show RTSP Log</string>
                 </property>
                </widget>
               </item>

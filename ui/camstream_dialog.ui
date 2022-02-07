@@ -59,9 +59,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-296</y>
+        <y>0</y>
         <width>603</width>
-        <height>532</height>
+        <height>557</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -80,7 +80,17 @@
        <property name="spacing">
         <number>3</number>
        </property>
-       <item row="19" column="0">
+       <item row="18" column="0">
+        <widget class="QLabel" name="label_30">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quality of jpeg compression when using a mjpeg stream. This option has no effect if using an h264 format. This also does not work with the raspicam driver.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Quality</string>
+         </property>
+        </widget>
+       </item>
+       <item row="20" column="0">
         <widget class="QLabel" name="label_37">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Which network mode to use for the stream. RTSP is generally recommended.&lt;/p&gt;
@@ -96,53 +106,7 @@
          </property>
         </widget>
        </item>
-       <item row="14" column="2">
-        <widget class="QComboBox" name="combox_profile">
-         <item>
-          <property name="text">
-           <string>baseline</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>main</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>high</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="12" column="0">
-        <widget class="QLabel" name="label_28">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Video format for the stream. H.264 will likely result in better quailty and higher resolution than MJPEG at the same bandwidth usage, however can increase latency. MJPEG is lower latency, but often much higher bandwidth. The Pi supports hardware H.264 encoding so H.264 is generally recommended.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Format</string>
-         </property>
-        </widget>
-       </item>
-       <item row="16" column="2">
-        <widget class="QLineEdit" name="txt_bitrate">
-         <property name="text">
-          <string>2048000</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="2">
-        <widget class="QLineEdit" name="txt_framerate">
-         <property name="toolTip">
-          <string>60</string>
-         </property>
-         <property name="text">
-          <string>30</string>
-         </property>
-        </widget>
-       </item>
-       <item row="19" column="2">
+       <item row="20" column="2">
         <widget class="QComboBox" name="combox_netmode">
          <property name="currentIndex">
           <number>2</number>
@@ -164,40 +128,21 @@
          </item>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_18">
-         <property name="font">
-          <font>
-           <bold>true</bold>
-          </font>
+       <item row="17" column="0">
+        <widget class="QLabel" name="label_29">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2kbits / sec). For mjpeg, this generally has no effect. However, when using the raspicam driver, this option has the same effect for mjpeg as it does for h264. In this case, the desired bitrate indirectly controls the jpeg compression quality. &lt;/p&gt;&lt;p&gt;Default = 2048000 = 2Mbits/sec&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Source</string>
+          <string>    Bitrate</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="2">
-        <widget class="QComboBox" name="combox_rotate">
-         <item>
-          <property name="text">
-           <string>0°</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>90°</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>180°</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>270°</string>
-          </property>
-         </item>
+       <item row="18" column="2">
+        <widget class="QLineEdit" name="txt_quality">
+         <property name="text">
+          <string>50</string>
+         </property>
         </widget>
        </item>
        <item row="2" column="0">
@@ -210,60 +155,17 @@
          </property>
         </widget>
        </item>
-       <item row="21" column="2">
-        <widget class="QLineEdit" name="txt_port">
-         <property name="text">
-          <string>8554</string>
-         </property>
-        </widget>
-       </item>
-       <item row="13" column="2">
-        <widget class="QComboBox" name="combox_encoder">
-         <item>
-          <property name="text">
-           <string>libav-omx</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>omx</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>libx264</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="22" column="0">
-        <widget class="QLabel" name="label_40">
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_33">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Path on the RTSP server for this stream. Does not apply in TCP or UDP mode.&lt;/p&gt;&lt;p&gt;Default = stream&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flip the image from the camera one or more ways. This may not work with V4L2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>    RTSP Key</string>
+          <string>    Flip</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
-        <widget class="QLabel" name="label_25">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Height of the video mode. Must be a valid video mode along with the width and framerate settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Height</string>
-         </property>
-        </widget>
-       </item>
-       <item row="20" column="2">
-        <widget class="QLineEdit" name="txt_address">
-         <property name="text">
-          <string>0.0.0.0</string>
-         </property>
-        </widget>
-       </item>
-       <item row="13" column="0">
+       <item row="14" column="0">
         <widget class="QLabel" name="label_31">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using V4L2 and the H.264 format, several encoders are available.&lt;/p&gt;
@@ -279,70 +181,7 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="2">
-        <widget class="QComboBox" name="combox_format">
-         <item>
-          <property name="text">
-           <string>h264</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>mjpeg</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_22">
-         <property name="font">
-          <font>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Video</string>
-         </property>
-        </widget>
-       </item>
-       <item row="17" column="0">
-        <widget class="QLabel" name="label_30">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quality of jpeg compression when using a mjpeg stream. This option has no effect if using an h264 format. This also does not work with the raspicam driver.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Quality</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="label_26">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Framerate of the video mode. Must be a valid video mode along with the width and height settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Framerate</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
-        <widget class="QLineEdit" name="txt_device">
-         <property name="text">
-          <string>/dev/video0</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="0">
-        <widget class="QLabel" name="label_35">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Gain of the image. Higher gain makes the image &amp;quot;lighter&amp;quot;. Likely will not work with V4L2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Gain</string>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="0">
+       <item row="12" column="0">
         <widget class="QLabel" name="label_27">
          <property name="font">
           <font>
@@ -354,50 +193,34 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_20">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head /&gt;
-&lt;body&gt;
-&lt;p&gt;What method is used to read data from the camera.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Raspicam = Pi Camera on Buster and older&lt;/li&gt;
-&lt;li&gt;libcamera = Pi Camera on bullseye and newer&lt;/li&gt;
-&lt;li&gt;V4L2 = USB webcams&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/body&gt;
-&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Driver</string>
-         </property>
+       <item row="15" column="2">
+        <widget class="QComboBox" name="combox_profile">
+         <item>
+          <property name="text">
+           <string>baseline</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>main</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>high</string>
+          </property>
+         </item>
         </widget>
        </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="label_34">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rotate the video one or more ways. This may not work with V4L2.&lt;/p&gt;&lt;p&gt;Often, only 0 or 180 degrees will work.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_22">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
          </property>
          <property name="text">
-          <string>    Rotate</string>
-         </property>
-        </widget>
-       </item>
-       <item row="14" column="0">
-        <widget class="QLabel" name="label_32">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;H.264 profile to use with the encoder. The profile determines the overall quality of the stream at a given bitrate. Generally, better quality requires longer to encode and increases latency. It is recommended to use baseline (especially if using libx264 encoder) to minimize latency, however with hardware accelerated encoding (V4L2) or when using a Pi camera higher profiles may work.&lt;/p&gt;
-&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Profile</string>
-         </property>
-        </widget>
-       </item>
-       <item row="22" column="2">
-        <widget class="QLineEdit" name="txt_rtspkey">
-         <property name="text">
-          <string>stream</string>
+          <string>Video</string>
          </property>
         </widget>
        </item>
@@ -463,17 +286,134 @@
          </item>
         </widget>
        </item>
-       <item row="5" column="2">
-        <widget class="QLineEdit" name="txt_width">
+       <item row="13" column="0">
+        <widget class="QLabel" name="label_28">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Width of the video mode. Must be a valid video mode along with the height and framerate settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Video format for the stream. H.264 will likely result in better quailty and higher resolution than MJPEG at the same bandwidth usage, however can increase latency. MJPEG is lower latency, but often much higher bandwidth. The Pi supports hardware H.264 encoding so H.264 is generally recommended.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>640</string>
+          <string>    Format</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="0">
+       <item row="22" column="2">
+        <widget class="QLineEdit" name="txt_port">
+         <property name="text">
+          <string>8554</string>
+         </property>
+        </widget>
+       </item>
+       <item row="23" column="2">
+        <widget class="QLineEdit" name="txt_rtspkey">
+         <property name="text">
+          <string>stream</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="2">
+        <widget class="QLineEdit" name="txt_framerate">
+         <property name="toolTip">
+          <string>60</string>
+         </property>
+         <property name="text">
+          <string>30</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label_25">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Height of the video mode. Must be a valid video mode along with the width and framerate settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Height</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_26">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Framerate of the video mode. Must be a valid video mode along with the width and height settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Framerate</string>
+         </property>
+        </widget>
+       </item>
+       <item row="23" column="0">
+        <widget class="QLabel" name="label_40">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Path on the RTSP server for this stream. Does not apply in TCP or UDP mode.&lt;/p&gt;&lt;p&gt;Default = stream&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    RTSP Key</string>
+         </property>
+        </widget>
+       </item>
+       <item row="17" column="2">
+        <widget class="QLineEdit" name="txt_bitrate">
+         <property name="text">
+          <string>2048000</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QLabel" name="label_35">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Gain of the image. Higher gain makes the image &amp;quot;lighter&amp;quot;. Likely will not work with V4L2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Gain</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_34">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rotate the video one or more ways. This may not work with V4L2.&lt;/p&gt;&lt;p&gt;Often, only 0 or 180 degrees will work.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Rotate</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="2">
+        <widget class="QComboBox" name="combox_rotate">
+         <item>
+          <property name="text">
+           <string>0°</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>90°</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>180°</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>270°</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_18">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Source</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
         <widget class="QLabel" name="label_23">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Width for the video. Must be a supported video mode along with the setting for height and framerate.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -483,20 +423,78 @@
          </property>
         </widget>
        </item>
-       <item row="23" column="0">
-        <spacer name="verticalSpacer_7">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+       <item row="22" column="0">
+        <widget class="QLabel" name="label_39">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TCP: The port to run the server on.&lt;/p&gt;&lt;p&gt;UDP: The port to send the frames to (at the given address).&lt;/p&gt;&lt;p&gt;RTSP: The port of the RTSP server&lt;/p&gt;&lt;p&gt;Default = 5008 for TCP or UDP; 8554 for RTSP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
+         <property name="text">
+          <string>    Port</string>
          </property>
-        </spacer>
+        </widget>
        </item>
-       <item row="8" column="2">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_20">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head /&gt;
+&lt;body&gt;
+&lt;p&gt;What method is used to read data from the camera.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Raspicam = Pi Camera on Buster and older&lt;/li&gt;
+&lt;li&gt;libcamera = Pi Camera on bullseye and newer&lt;/li&gt;
+&lt;li&gt;V4L2 = USB webcams&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Driver</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_21">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;I/O mode to use with a V4L2 device. Generally, use auto. If latency is an issue, try dmabuf.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    IO Mode</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="2">
+        <widget class="QLineEdit" name="txt_height">
+         <property name="toolTip">
+          <string>480</string>
+         </property>
+         <property name="text">
+          <string>480</string>
+         </property>
+        </widget>
+       </item>
+       <item row="19" column="0">
+        <widget class="QLabel" name="label_36">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Network</string>
+         </property>
+        </widget>
+       </item>
+       <item row="21" column="0">
+        <widget class="QLabel" name="label_38">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For TCP, this is the address to run the server on. Use 0.0.0.0 to run the server on all the Pi's IP addresses (recommended).&lt;/p&gt;&lt;p&gt;For UDP, this is the address of the device to send frames to via UDP (the address of the computer you want to play the stream on).&lt;/p&gt;&lt;p&gt;For RTSP, this is the address of the running RTSP server (typically 127.0.0.1 as the server usually runs on the Pi).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Address</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="2">
         <widget class="QComboBox" name="combox_flip">
          <item>
           <property name="text">
@@ -520,89 +518,115 @@
          </item>
         </widget>
        </item>
-       <item row="18" column="0">
-        <widget class="QLabel" name="label_36">
-         <property name="font">
-          <font>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Network</string>
-         </property>
+       <item row="14" column="2">
+        <widget class="QComboBox" name="combox_encoder">
+         <item>
+          <property name="text">
+           <string>libav-omx</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>omx</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>libx264</string>
+          </property>
+         </item>
         </widget>
        </item>
-       <item row="6" column="2">
-        <widget class="QLineEdit" name="txt_height">
-         <property name="toolTip">
-          <string>480</string>
-         </property>
-         <property name="text">
-          <string>480</string>
-         </property>
-        </widget>
-       </item>
-       <item row="17" column="2">
-        <widget class="QLineEdit" name="txt_quality">
-         <property name="text">
-          <string>50</string>
-         </property>
-        </widget>
-       </item>
-       <item row="21" column="0">
-        <widget class="QLabel" name="label_39">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TCP: The port to run the server on.&lt;/p&gt;&lt;p&gt;UDP: The port to send the frames to (at the given address).&lt;/p&gt;&lt;p&gt;RTSP: The port of the RTSP server&lt;/p&gt;&lt;p&gt;Default = 5008 for TCP or UDP; 8554 for RTSP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Port</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_21">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;I/O mode to use with a V4L2 device. Generally, use auto. If latency is an issue, try dmabuf.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    IO Mode</string>
-         </property>
-        </widget>
-       </item>
-       <item row="20" column="0">
-        <widget class="QLabel" name="label_38">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For TCP, this is the address to run the server on. Use 0.0.0.0 to run the server on all the Pi's IP addresses (recommended).&lt;/p&gt;&lt;p&gt;For UDP, this is the address of the device to send frames to via UDP (the address of the computer you want to play the stream on).&lt;/p&gt;&lt;p&gt;For RTSP, this is the address of the running RTSP server (typically 127.0.0.1 as the server usually runs on the Pi).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Address</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0">
-        <widget class="QLabel" name="label_33">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flip the image from the camera one or more ways. This may not work with V4L2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>    Flip</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="2">
+       <item row="11" column="2">
         <widget class="QLineEdit" name="txt_gain">
          <property name="text">
           <string>10.0</string>
          </property>
         </widget>
        </item>
-       <item row="16" column="0">
-        <widget class="QLabel" name="label_29">
+       <item row="21" column="2">
+        <widget class="QLineEdit" name="txt_address">
+         <property name="text">
+          <string>0.0.0.0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLineEdit" name="txt_device">
+         <property name="text">
+          <string>/dev/video0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="2">
+        <widget class="QLineEdit" name="txt_width">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2kbits / sec). For mjpeg, this generally has no effect. However, when using the raspicam driver, this option has the same effect for mjpeg as it does for h264. In this case, the desired bitrate indirectly controls the jpeg compression quality. &lt;/p&gt;&lt;p&gt;Default = 2048000 = 2Mbits/sec&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Width of the video mode. Must be a valid video mode along with the height and framerate settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>    Bitrate</string>
+          <string>640</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0">
+        <widget class="QLabel" name="label_32">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;H.264 profile to use with the encoder. The profile determines the overall quality of the stream at a given bitrate. Generally, better quality requires longer to encode and increases latency. It is recommended to use baseline (especially if using libx264 encoder) to minimize latency, however with hardware accelerated encoding (V4L2) or when using a Pi camera higher profiles may work.&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    Profile</string>
+         </property>
+        </widget>
+       </item>
+       <item row="24" column="0">
+        <spacer name="verticalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="13" column="2">
+        <widget class="QComboBox" name="combox_format">
+         <item>
+          <property name="text">
+           <string>h264</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>mjpeg</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="4" column="2">
+        <widget class="QComboBox" name="combox_vconvert">
+         <item>
+          <property name="text">
+           <string>Disabled</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Enabled</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_24">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Pass input video form source through videoconvert element before encoding. Only applies to V4L2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>    VConvert</string>
          </property>
         </widget>
        </item>
