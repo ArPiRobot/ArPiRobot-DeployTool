@@ -1,7 +1,7 @@
 from typing import Optional
 from ui_playstream_dialog import Ui_PlayStreamDialog
 from PySide6.QtWidgets import QDialog, QWidget
-from PySide6.QtCore import Signal, QTimer
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QCloseEvent
 import subprocess
 import signal
@@ -10,6 +10,7 @@ import signal
 class PlayStreamDialog(QDialog):
     def __init__(self, title: str, message: str, proc: subprocess.Popen, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self.setWindowFlags(self.windowFlags() | Qt.Tool)
 
         self.proc = proc
 

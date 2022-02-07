@@ -1173,6 +1173,11 @@ class DeployToolWindow(QMainWindow):
         data = stdout.read().decode().strip().lower()
         self.ui.cbx_enable_rtsp.setChecked(data == "enabled")
 
+    def handle_popstreams_complete(self, res):
+        self.hide_progress()
+        if self.ui.combox_stream_source.count() > 0:
+            self.ui.combox_stream_source.setCurrentIndex(0)
+
     def handle_popstreams_exc(self, e):
         self.hide_progress()
         print(e)
@@ -1180,7 +1185,7 @@ class DeployToolWindow(QMainWindow):
     def populate_streams(self):
         self.show_progress(self.tr("Loading"), self.tr("Loading info from robot..."))
         task = Task(self, self.do_populate_streams)
-        task.task_complete.connect(lambda res: self.hide_progress())
+        task.task_complete.connect(self.handle_popstreams_complete)
         task.task_exception.connect(self.handle_popstreams_exc)
         self.start_task(task)
 
@@ -1332,7 +1337,7 @@ class DeployToolWindow(QMainWindow):
         pdialog = PlayStreamDialog("Playing Stream", "Playing stream '{0}' using {1}...".format(stream, player), p, self)
         self.camstreams.append(pdialog)
         pdialog.finished.connect(lambda res: self.camstreams.remove(pdialog))
-        pdialog.open()
+        pdialog.show()
     
     def construct_play_command(self, address, netmode, port, rtspkey, player, framerate, format):
         if address == "auto":

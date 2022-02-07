@@ -865,12 +865,12 @@
              </property>
              <item>
               <property name="text">
-               <string>ffplay</string>
+               <string>mpv</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>mpv</string>
+               <string>ffplay</string>
               </property>
              </item>
              <item>
