@@ -382,6 +382,13 @@ class DeployToolWindow(QMainWindow):
     ############################################################################
 
     def populate_this_pc(self):
+        self.show_progress("Searching", "Searching for Tools...")
+        task = Task(self, self.do_populate_this_pc)
+        task.task_complete.connect(self.hide_progress)
+        task.task_exception.connect(self.hide_progress)
+        self.start_task(task)
+
+    def do_populate_this_pc(self):
         # Load CoreLib version
         path = QDir.homePath() + "/.arpirobot/corelib/version.txt"
         if QFileInfo(path).exists():
@@ -394,6 +401,53 @@ class DeployToolWindow(QMainWindow):
                 self.ui.txt_corelib_version.setText("Unknown Version")
         else:
             self.ui.txt_corelib_version.setText("Not Installed")
+        
+        # Load cmake version
+        if shutil.which('cmake') is None:
+            self.ui.txt_cmake_version.setText(self.tr("Not Installed"))
+        else:
+            cmd = subprocess.Popen(["cmake", "--version"], stdout=subprocess.PIPE)
+            # First line of output is cmake version [VERSION]
+            self.ui.txt_cmake_version.setText(cmd.stdout.readline().decode()[14:].strip())
+        
+        # Check for installed toolchain
+        path = QDir.homePath() + "/.arpirobot/toolchain/"
+        target = "Unknown Target"
+        if(QFileInfo(path).exists()):
+            for file in os.listdir(path + "/bin"):
+                if file.endswith("-gcc"):
+                    target = file[:-5]
+                    break
+                if file.endswith("-gcc.exe"):
+                    target = file[:-8]
+                    break
+            self.ui.txt_toolchain.setText(target)
+        else:
+            self.ui.txt_toolchain.setText("Not Installed")
+        
+        # Find any python interpreters in path. List versions
+        versions = []
+        interpreters = []
+        if platform.system() == "Windows":
+            cmd = subprocess.Popen(["where.exe python"], stdout=subprocess.PIPE)
+            interpreters.extend(cmd.stdout.readlines())
+        else:
+            cmd = subprocess.Popen(["which -a python"], stdout=subprocess.PIPE)
+            interpreters.extend(cmd.stdout.readlines())
+        for interpreter in interpreters:
+            cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], stdout=subprocess.PIPE)
+            # Output: Python [VERSION]
+            versions.append(cmd.stdout.readline().decode()[7:].strip())
+        # Remove duplicate version numbers
+        versions = list(dict.fromkeys(versions))
+        if len(versions) == 0:
+            self.ui.txt_python_version.setText("Not Installed")
+        else:
+            v_str = versions[0]
+            for v in versions[1:]:
+                if v != "":
+                    v_str = "{0}, {1}".format(v_str, v)
+            self.ui.txt_pc_python_version.setText(v_str)
 
     def do_update_package_installation(self, filename: str):
         with ZipFile(filename) as zfile:
