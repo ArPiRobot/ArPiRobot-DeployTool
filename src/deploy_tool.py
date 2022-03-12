@@ -1,4 +1,5 @@
 
+from ast import Tuple
 import socket
 import re
 from threading import local
@@ -198,6 +199,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.tabs_main.currentChanged.connect(self.tab_changed)
 
         self.ui.btn_install_update.clicked.connect(self.install_update_package)
+        self.ui.btn_install_toolchain.clicked.connect(self.install_toolchain_package)
 
         self.ui.btn_connect.clicked.connect(self.toggle_connection)
 
@@ -412,15 +414,16 @@ class DeployToolWindow(QMainWindow):
         
         # Check for installed toolchain
         path = QDir.homePath() + "/.arpirobot/toolchain/"
-        target = "Unknown Target"
+        target = "Invalid Toolchain"
         if(QFileInfo(path).exists()):
-            for file in os.listdir(path + "/bin"):
-                if file.endswith("-gcc"):
-                    target = file[:-5]
-                    break
-                if file.endswith("-gcc.exe"):
-                    target = file[:-8]
-                    break
+            if os.path.exists(path + "/bin"):
+                for file in os.listdir(path + "/bin"):
+                    if file.endswith("-gcc"):
+                        target = file[:-5]
+                        break
+                    if file.endswith("-gcc.exe"):
+                        target = file[:-8]
+                        break
             self.ui.txt_toolchain.setText(target)
         else:
             self.ui.txt_toolchain.setText("Not Installed")
@@ -570,6 +573,61 @@ class DeployToolWindow(QMainWindow):
                     line = fp.readline()
         with open(filename, "a") as fp:
             fp.write("{0}={1}:${0}\n".format(var, value))
+
+    def do_install_toolchain_package(self, filename: str):
+        tmp_path = QDir.homePath() + "/.arpirobot/toolchain-tmp"
+        final_path = QDir.homePath() + "/.arpirobot/toolchain"
+        
+        # Delete old toolchain if installed
+        if os.path.exists(tmp_path):
+            shutil.rmtree(tmp_path)
+        if os.path.exists(final_path):
+            shutil.rmtree(final_path)
+
+        # Extract archive to the toolchain directory
+        shutil.unpack_archive(filename, tmp_path)
+
+        dirs = os.listdir(tmp_path)
+        if len(dirs) == 1:
+            # Handle archives that have a single root directory containing the toolchain
+            shutil.move(tmp_path + "/" + dirs[0], final_path)
+        else:
+            shutil.move(tmp_path, final_path)
+            
+
+
+    def convert_formats(self, formats) -> str:
+        fmt_str = ""
+        for f in formats:
+            fmt_str = "{0} *.{1}".format(fmt_str, f[0])
+        return fmt_str
+
+    def handle_toolchain_success(self, res):
+         self.hide_progress()
+         self.populate_this_pc()
+
+    def handle_toolchain_failure(self, e):
+        self.hide_progress()
+        print(e)
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText(self.tr("Make sure the archive exists, is a known format, and is not corrupted."))
+        dialog.setWindowTitle(self.tr("Error Installing Toolchain"))
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.exec()
+
+    def install_toolchain_package(self):
+        fmt_str = self.convert_formats(shutil.get_archive_formats())
+        filename = QFileDialog.getOpenFileName(self, self.tr("Open Update Package"), QDir.homePath(), self.tr("Archives (") + fmt_str + ")")[0]
+        if filename == "":
+            return
+
+        # Perform installation of update package on background thread
+        self.show_progress("Installing Toolchain", "Extracting toolchain package")
+        task = Task(self, self.do_install_toolchain_package, filename)
+        task.task_complete.connect(self.handle_toolchain_success)
+        task.task_exception.connect(self.handle_toolchain_failure)
+        self.start_task(task)
 
     ############################################################################
     # Robot connection tab

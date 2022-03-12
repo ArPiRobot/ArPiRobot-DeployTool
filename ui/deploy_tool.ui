@@ -158,7 +158,7 @@
             </widget>
            </item>
            <item row="6" column="4">
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="btn_install_toolchain">
              <property name="text">
               <string>Install Toolchain Package</string>
              </property>
