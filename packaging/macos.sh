@@ -55,7 +55,7 @@ rm -rf macos/build/ || fail
 rm -rf macos/dist/ArPiRobot-DeployTool.app/ || fail
 rm -rf macos/dist/ArPiRobot-DeployTool/ || fail
 cd macos/
-pyinstaller macos/macos.spec || fail
+pyinstaller macos.spec || fail
 cd ..
 
 
@@ -63,9 +63,11 @@ cd ..
 # Create Zip
 ################################################################################
 echo "**Creating Zip**"
-pushd dist > /dev/null
+pushd macos/dist > /dev/null
 zip -r ArPiRobot-DeployTool-$VERSION.app.zip ArPiRobot-DeployTool.app
 popd > /dev/null
+mkdir ./dist/
+cp macos/dist/ArPiRobot-DeployTool-$VERSION.app.zip ./dist
 
 ################################################################################
 # Cleanup
