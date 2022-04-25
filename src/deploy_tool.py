@@ -404,11 +404,14 @@ class DeployToolWindow(QMainWindow):
         else:
             self.ui.txt_corelib_version.setText("Not Installed")
         
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
         # Load cmake version
         if shutil.which('cmake') is None:
             self.ui.txt_cmake_version.setText(self.tr("Not Installed"))
         else:
-            cmd = subprocess.Popen(["cmake", "--version"], stdout=subprocess.PIPE)
+            cmd = subprocess.Popen(["cmake", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is cmake version [VERSION]
             self.ui.txt_cmake_version.setText(cmd.stdout.readline().decode()[14:].strip())
         
@@ -431,16 +434,14 @@ class DeployToolWindow(QMainWindow):
         # Find any python interpreters in path. List versions
         versions = []
         interpreters = []
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         if platform.system() == "Windows":
-            cmd = subprocess.Popen(["where.exe python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd = subprocess.Popen(["where.exe", "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             interpreters.extend(cmd.stdout.readlines())
         else:
-            cmd = subprocess.Popen(["which -a python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd = subprocess.Popen(["which" "-a" "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             interpreters.extend(cmd.stdout.readlines())
         for interpreter in interpreters:
-            cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], stdout=subprocess.PIPE)
+            cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Output: Python [VERSION]
             versions.append(cmd.stdout.readline().decode()[7:].strip())
         # Remove duplicate version numbers
