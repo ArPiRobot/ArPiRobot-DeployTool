@@ -383,11 +383,17 @@ class DeployToolWindow(QMainWindow):
     # This PC tab
     ############################################################################
 
+    def handle_populate_this_pc_exec(self, e):
+        self.hide_progress()
+        print("EXCEPTION")
+        print(e)
+        traceback.print_exc()
+
     def populate_this_pc(self):
         self.show_progress("Searching", "Searching for Tools...")
         task = Task(self, self.do_populate_this_pc)
         task.task_complete.connect(self.hide_progress)
-        task.task_exception.connect(self.hide_progress)
+        task.task_exception.connect(self.handle_populate_this_pc_exec)
         self.start_task(task)
 
     def do_populate_this_pc(self):
@@ -404,8 +410,11 @@ class DeployToolWindow(QMainWindow):
         else:
             self.ui.txt_corelib_version.setText("Not Installed")
         
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            startupinfo = None
 
         # Load cmake version
         if shutil.which('cmake') is None:
@@ -447,15 +456,19 @@ class DeployToolWindow(QMainWindow):
             self.ui.txt_toolchain.setText(target)
         else:
             self.ui.txt_toolchain.setText("Not Installed")
-        
+
         # Find any python interpreters in path. List versions
         versions = []
         interpreters = []
         if platform.system() == "Windows":
             cmd = subprocess.Popen(["where.exe", "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             interpreters.extend(cmd.stdout.readlines())
+            cmd = subprocess.Popen(["where.exe", "python3"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            interpreters.extend(cmd.stdout.readlines())
         else:
-            cmd = subprocess.Popen(["which" "-a" "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            cmd = subprocess.Popen(["which", "-a", "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            interpreters.extend(cmd.stdout.readlines())
+            cmd = subprocess.Popen(["which", "-a", "python3"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             interpreters.extend(cmd.stdout.readlines())
         for interpreter in interpreters:
             cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -464,7 +477,7 @@ class DeployToolWindow(QMainWindow):
         # Remove duplicate version numbers
         versions = list(dict.fromkeys(versions))
         if len(versions) == 0:
-            self.ui.txt_python_version.setText("Not Installed")
+            self.ui.txt_pc_python_version.setText("Not Installed")
         else:
             v_str = versions[0]
             for v in versions[1:]:
