@@ -13,6 +13,11 @@ while true; do
   esac
 done
 
+function fail(){
+    echo "**Failed!**"
+    exit 1
+}
+
 function realpath() {
   OURPWD=$PWD
   cd "$(dirname "$1")"
@@ -46,10 +51,12 @@ popd > /dev/null
 # Create pyinstaller binary
 ################################################################################
 echo "**Creating PyInstaller Binary**"
-rm -rf build/ || fail
-rm -rf dist/ArPiRobot-DeployTool.app/ || fail
-rm -rf dist/ArPiRobot-DeployTool/ || fail
+rm -rf macos/build/ || fail
+rm -rf macos/dist/ArPiRobot-DeployTool.app/ || fail
+rm -rf macos/dist/ArPiRobot-DeployTool/ || fail
+cd macos/
 pyinstaller macos/macos.spec || fail
+cd ..
 
 
 ################################################################################
@@ -64,8 +71,8 @@ popd > /dev/null
 # Cleanup
 ################################################################################
 
-rm -rf build/
-rm -rf dist/ArPiRobot-DeployTool.app/
-rm -rf dist/ArPiRobot-DeployTool/
+rm -rf macos/build/
+rm -rf macos/dist/ArPiRobot-DeployTool.app/
+rm -rf macos/dist/ArPiRobot-DeployTool/
 
 popd > /dev/null

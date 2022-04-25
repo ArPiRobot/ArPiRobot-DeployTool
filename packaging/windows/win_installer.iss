@@ -40,7 +40,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\dist\ArPiRobot-DeployTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: ".\dist\ArPiRobot-DeployTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "..\..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\res\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
