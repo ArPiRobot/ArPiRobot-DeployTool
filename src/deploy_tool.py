@@ -431,11 +431,13 @@ class DeployToolWindow(QMainWindow):
         # Find any python interpreters in path. List versions
         versions = []
         interpreters = []
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         if platform.system() == "Windows":
-            cmd = subprocess.Popen(["where.exe python"], stdout=subprocess.PIPE)
+            cmd = subprocess.Popen(["where.exe python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             interpreters.extend(cmd.stdout.readlines())
         else:
-            cmd = subprocess.Popen(["which -a python"], stdout=subprocess.PIPE)
+            cmd = subprocess.Popen(["which -a python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             interpreters.extend(cmd.stdout.readlines())
         for interpreter in interpreters:
             cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], stdout=subprocess.PIPE)
