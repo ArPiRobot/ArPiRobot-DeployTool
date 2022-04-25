@@ -560,9 +560,12 @@ class DeployToolWindow(QMainWindow):
             cmd = "cmd /s /c \"setx {0} \"{1}\"".format(var, value)
         else:
             cmd = "cmd /s /c \"setx {0} \"{1};%{0}%\"".format(var, value)
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        subprocess.call(cmd, startupinfo=si)
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            startupinfo = None
+        subprocess.call(cmd, startupinfo=startupinfo)
 
     def add_var_to_profile(self, filename: str, var: str, value: str):
         if os.path.isdir(filename):
@@ -1474,8 +1477,11 @@ class DeployToolWindow(QMainWindow):
             if port == "":
                 port = "5008"
         
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            startupinfo = None
         cmd = self.construct_play_command(address, netmode, port, rtsp_key, player, framerate, format)
         print(cmd)
         p = subprocess.Popen(cmd, startupinfo=startupinfo, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
