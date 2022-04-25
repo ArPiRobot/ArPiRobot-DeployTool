@@ -71,21 +71,21 @@
            <property name="spacing">
             <number>3</number>
            </property>
-           <item row="6" column="2" colspan="2">
+           <item row="7" column="4">
+            <widget class="QPushButton" name="btn_install_toolchain">
+             <property name="text">
+              <string>Install Toolchain Package</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="2" colspan="2">
             <widget class="QLineEdit" name="txt_toolchain">
              <property name="readOnly">
               <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="5" column="2" colspan="2">
-            <widget class="QLineEdit" name="txt_cmake_version">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="4">
+           <item row="9" column="4">
             <widget class="QLabel" name="label_27">
              <property name="text">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://www.python.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -98,7 +98,14 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0" colspan="5">
+           <item row="5" column="2" colspan="2">
+            <widget class="QLineEdit" name="txt_cmake_version">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="0" colspan="5">
             <widget class="QLabel" name="label_25">
              <property name="font">
               <font>
@@ -107,6 +114,40 @@
              </property>
              <property name="text">
               <string>Python Development Tools</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>ArPiRobot Toolchain</string>
+             </property>
+            </widget>
+           </item>
+           <item row="9" column="2" colspan="2">
+            <widget class="QLineEdit" name="txt_pc_python_version">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="4">
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://cmake.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="openExternalLinks">
+              <bool>true</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::TextBrowserInteraction</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLabel" name="label_21">
+             <property name="text">
+              <string>CMake Version</string>
              </property>
             </widget>
            </item>
@@ -119,6 +160,40 @@
              </property>
              <property name="text">
               <string>ArPiRobot Libraries</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>ArPiRobot CoreLib Version</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="3" colspan="2">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;The ArPiRobot Core Library is installed on your computer and is used when deploying a program to the robot. When deploying a program, the installed version of the core library will be deployed along with it. &lt;/span&gt;&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;This is required for both C++ and Python programming.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="9" column="1">
+            <widget class="QLabel" name="label_26">
+             <property name="text">
+              <string>Python Interpreter Version(s)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="3">
+            <widget class="QLineEdit" name="txt_corelib_version">
+             <property name="readOnly">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -138,13 +213,6 @@
              </property>
             </spacer>
            </item>
-           <item row="2" column="1">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>ArPiRobot CoreLib Version</string>
-             </property>
-            </widget>
-           </item>
            <item row="4" column="0" colspan="5">
             <widget class="QLabel" name="label_19">
              <property name="font">
@@ -157,13 +225,6 @@
              </property>
             </widget>
            </item>
-           <item row="6" column="4">
-            <widget class="QPushButton" name="btn_install_toolchain">
-             <property name="text">
-              <string>Install Toolchain Package</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="4">
             <widget class="QPushButton" name="btn_install_update">
              <property name="text">
@@ -171,30 +232,17 @@
              </property>
             </widget>
            </item>
-           <item row="8" column="1">
-            <widget class="QLabel" name="label_26">
+           <item row="6" column="1">
+            <widget class="QLabel" name="label_20">
              <property name="text">
-              <string>Python Interpreter Version(s)</string>
+              <string>GNU Make Version</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="3" colspan="2">
-            <widget class="QLabel" name="label_6">
+           <item row="6" column="4">
+            <widget class="QLabel" name="lbl_make_download">
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;The ArPiRobot Core Library is installed on your computer and is used when deploying a program to the robot. When deploying a program, the installed version of the core library will be deployed along with it. &lt;/span&gt;&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;This is required for both C++ and Python programming.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="4">
-            <widget class="QLabel" name="label_22">
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://cmake.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://sourceforge.net/projects/ezwinports/files/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="openExternalLinks">
               <bool>true</bool>
@@ -204,33 +252,8 @@
              </property>
             </widget>
            </item>
-           <item row="8" column="2" colspan="2">
-            <widget class="QLineEdit" name="txt_pc_python_version">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="1">
-            <widget class="QLabel" name="label_23">
-             <property name="text">
-              <string>ArPiRobot Toolchain</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QLabel" name="label_21">
-             <property name="text">
-              <string>CMake Version</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="3">
-            <widget class="QLineEdit" name="txt_corelib_version">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
+           <item row="6" column="2" colspan="2">
+            <widget class="QLineEdit" name="txt_make_version"/>
            </item>
           </layout>
          </widget>

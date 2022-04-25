@@ -414,6 +414,23 @@ class DeployToolWindow(QMainWindow):
             cmd = subprocess.Popen(["cmake", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is cmake version [VERSION]
             self.ui.txt_cmake_version.setText(cmd.stdout.readline().decode()[14:].strip())
+
+        # Load make version
+        if platform.system() == "Windows":
+            self.ui.lbl_make_download.show()
+        else:
+            self.ui.lbl_make_download.hide()
+        if shutil.which('gmake') is None:
+            if shutil.which('make') is None:
+                self.ui.txt_make_version.setText(self.tr("Not Installed"))
+            else:
+                cmd = subprocess.Popen(["make", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # First line of output is make version [VERSION]
+                self.ui.txt_make_version.setText(cmd.stdout.readline().decode()[9:].strip())
+        else:
+            cmd = subprocess.Popen(["gmake", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # First line of output is make version [VERSION]
+            self.ui.txt_make_version.setText(cmd.stdout.readline().decode()[9:].strip())
         
         # Check for installed toolchain
         path = QDir.homePath() + "/.arpirobot/toolchain/"
