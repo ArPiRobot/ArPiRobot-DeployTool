@@ -33,7 +33,7 @@ exe = EXE(pyz,
           target_arch='x86_64',
           codesign_identity=None,
           entitlements_file=None,
-          icon='../res/icon.icns')
+          icon='../../res/icon.icns')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
