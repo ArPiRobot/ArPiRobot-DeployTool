@@ -448,7 +448,7 @@ class DeployToolWindow(QMainWindow):
             if os.path.exists(path + "/bin"):
                 for file in os.listdir(path + "/bin"):
                     if file.endswith("-gcc"):
-                        target = file[:-5]
+                        target = file[:-4]
                         break
                     if file.endswith("-gcc.exe"):
                         target = file[:-8]
@@ -460,16 +460,16 @@ class DeployToolWindow(QMainWindow):
         # Find any python interpreters in path. List versions
         versions = []
         interpreters = []
-        if platform.system() == "Windows":
-            cmd = subprocess.Popen(["where.exe", "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            interpreters.extend(cmd.stdout.readlines())
-            cmd = subprocess.Popen(["where.exe", "python3"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            interpreters.extend(cmd.stdout.readlines())
-        else:
-            cmd = subprocess.Popen(["which", "-a", "python"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            interpreters.extend(cmd.stdout.readlines())
-            cmd = subprocess.Popen(["which", "-a", "python3"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            interpreters.extend(cmd.stdout.readlines())
+        python_exe_names = ["python", "python3"]
+        for i in range(20):
+            python_exe_names.append("python3.{0}".format(i))
+        for name in python_exe_names:
+            if platform.system() == "Windows":
+                cmd = subprocess.Popen(["where.exe", name], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+                interpreters.extend(cmd.stdout.readlines())
+            else:
+                cmd = subprocess.Popen(["which", "-a", name], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                interpreters.extend(cmd.stdout.readlines())
         for interpreter in interpreters:
             cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Output: Python [VERSION]
@@ -638,6 +638,15 @@ class DeployToolWindow(QMainWindow):
     def convert_formats(self, formats) -> str:
         fmt_str = ""
         for f in formats:
+            if f[0] == "gztar":
+                fmt_str = "{0} *.{1}".format(fmt_str, "tar.gz")
+                fmt_str = "{0} *.{1}".format(fmt_str, "tgz")
+            if f[0] == "bztar":
+                fmt_str = "{0} *.{1}".format(fmt_str, "tar.bz")
+                fmt_str = "{0} *.{1}".format(fmt_str, "tbz")
+            if f[0] == "xztar":
+                fmt_str = "{0} *.{1}".format(fmt_str, "tar.xz")
+                fmt_str = "{0} *.{1}".format(fmt_str, "txz")
             fmt_str = "{0} *.{1}".format(fmt_str, f[0])
         return fmt_str
 
