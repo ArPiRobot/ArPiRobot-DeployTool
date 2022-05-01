@@ -463,6 +463,7 @@ class DeployToolWindow(QMainWindow):
         python_exe_names = ["python", "python3"]
         for i in range(20):
             python_exe_names.append("python3.{0}".format(i))
+            python_exe_names.append("python3{0}".format(i))
         for name in python_exe_names:
             if platform.system() == "Windows":
                 cmd = subprocess.Popen(["where.exe", name], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
