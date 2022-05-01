@@ -543,6 +543,9 @@ class DeployToolWindow(QMainWindow):
             self.add_var_to_profile(home + "/.bashrc", "PYTHONPATH", path)
             self.add_var_to_profile(home + "/.zshrc", "PYTHONPATH", path)
             self.add_var_to_profile(home + "/.profile", "PYTHONPATH", path)
+        if platform.system() == "Linux":
+            if not os.path.exists(home + "/.config/environment.d/"):
+                os.mkdir(home + "/.config/environment.d/")
             self.add_var_to_config(home + "/.config/environment.d/deploy-tool.conf", "PYTHONPATH", path)
 
     def add_var_windows(self, var: str, value: str):
