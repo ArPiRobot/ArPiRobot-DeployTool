@@ -1,5 +1,5 @@
 Package: ArPiRobot-DeployTool
-Version: 0.4.0-beta5
+Version: 0.4.0-beta6
 Section: base
 Priority: optional
 Architecture: amd64
