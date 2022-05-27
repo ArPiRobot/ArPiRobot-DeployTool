@@ -1,6 +1,0 @@
-*.AppImage
-*.appimage
-AppDir/
-squashfs-root/
-build/
-dist/

@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=ArPiRobot Deploy Tool
-Exec=AppRun
-Comment=Code deployment and configuration tool for ArPiRobot robots. 
-Icon=arpirobot-deploytool
-Categories=
-Terminal=false
