@@ -67,4 +67,4 @@ chmod a+x dist/ArPiRobot-DeployTool/AppRun
 
 # Create appimage file
 chmod +x ./appimagetool.appimage
-ARCH=x86_64 ./appimagetool.appimage --no-appstream dist/ArPiRobot-DeployTool ArPirobot-DeployTool-x86_64.AppImage
+ARCH=x86_64 ./appimagetool.appimage --no-appstream dist/ArPiRobot-DeployTool ArPiRobot-DeployTool-x86_64.AppImage
