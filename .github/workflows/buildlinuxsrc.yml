@@ -2,9 +2,6 @@ name: Build Linux
 on: [workflow_dispatch]
 jobs:
   Build:
-    # PySide6 won't work on Ubuntu 18.04 (glibc too old)
-    # Therefore if using pyinstaller method instead of source method, 
-    #     packages are compatible with fewer systems
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2

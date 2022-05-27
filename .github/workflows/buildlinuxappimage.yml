@@ -1,0 +1,14 @@
+name: Build Linux (x64 AppImage)
+on: [workflow_dispatch]
+jobs:
+  Build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - working-directory: ./packaging
+        run: ./linux_appimage.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Packages
+          path: ./packaging/linux_appimage/ArPirobot-DeployTool-x86_64.AppImage
+          retention-days: 1
