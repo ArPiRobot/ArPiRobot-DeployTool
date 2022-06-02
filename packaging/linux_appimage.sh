@@ -46,7 +46,8 @@ rm AppDir/usr/share/icons/hicolor/256x256/apps/python.png
 
 # Create appimage file
 chmod +x ./appimagetool.appimage
-ARCH=x86_64 ./appimagetool.appimage --no-appstream AppDir ArPirobot-DeployTool-x86_64.AppImage
+mkdir -p ../dist/
+ARCH=x86_64 ./appimagetool.appimage --no-appstream AppDir ../dist/ArPirobot-DeployTool-Linux-x64.AppImage
 
 popd > /dev/null
 

@@ -86,7 +86,7 @@ fi
 if [ "$BUILD_TAR" == "yes" ]; then
     echo "**Creating tar.gz package**"
     pushd dist > /dev/null
-    tar -zcvf ArPiRobot-DeployTool-${VERSION}.tar.gz ./ArPiRobot-DeployTool/ || fail
+    tar -zcvf ArPiRobot-DeployTool-Linux-Any.tar.gz ArPiRobot-DeployTool/ || fail
     popd > /dev/null
 fi
 
@@ -109,8 +109,12 @@ if [ "$BUILD_DEB" == "yes" ]; then
     mkdir arpirobot-deploytool_$VERSION/DEBIAN
     mkdir arpirobot-deploytool_$VERSION/opt
     mkdir arpirobot-deploytool_$VERSION/opt/ArPiRobot-DeployTool
+    mkdir -p arpirobot-deploytool_$VERSION/usr/share/doc/arpirobot-deploytool/
+    mkdir -p arpirobot-deploytool_$VERSION/usr/share/metainfo/
 
     # Copy files
+    cp ../linux_source/arpirobot-deploytool.appdata.xml ./arpirobot-deploytool_$VERSION/usr/share/metainfo/
+    cp ./ArPiRobot-DeployTool/COPYING ./arpirobot-deploytool_$VERSION/usr/share/doc/arpirobot-deploytool/copyright
     cp -r ./ArPiRobot-DeployTool/* ./arpirobot-deploytool_$VERSION/opt/ArPiRobot-DeployTool/
     cp ../linux_source/deb_control ./arpirobot-deploytool_$VERSION/DEBIAN/control
     cp ../linux_source/deb_prerm ./arpirobot-deploytool_$VERSION/DEBIAN/prerm
@@ -119,6 +123,7 @@ if [ "$BUILD_DEB" == "yes" ]; then
 
     # Generate package
     dpkg-deb --build arpirobot-deploytool_$VERSION || fail
+    mv arpirobot-deploytool_$VERSION.deb ArPiRobot-DeployTool-Ubuntu-Any.deb
 
     rm -rf ./arpirobot-deploytool_$VERSION/
 

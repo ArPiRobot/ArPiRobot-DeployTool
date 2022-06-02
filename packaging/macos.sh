@@ -64,10 +64,11 @@ cd ..
 ################################################################################
 echo "**Creating Zip**"
 pushd macos/dist > /dev/null
-zip -r ArPiRobot-DeployTool-$VERSION.app.zip ArPiRobot-DeployTool.app
+zip -r ArPiRobot-DeployTool-macOS-x64.app.zip ArPiRobot-DeployTool.app
 popd > /dev/null
 mkdir ./dist/
-cp macos/dist/ArPiRobot-DeployTool-$VERSION.app.zip ./dist
+cp macos/dist/ArPiRobot-DeployTool-macOS-x64.app.zip ./dist
+
 
 ################################################################################
 # Cleanup

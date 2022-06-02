@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: python3 -m pip install setuptools wheel
-      - run: python3 -m pip install -r requirements.txt
+      - run: python3 -m pip install -U -r requirements.txt
       - working-directory: ./packaging
         run: ./macos.sh --python python3
       - uses: actions/upload-artifact@v2

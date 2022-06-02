@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "ArPiRobot Deploy Tool"
-#define MyAppVersion "0.4.0-beta6"
+#define MyAppVersion "0.4.0-beta7"
 #define MyAppPublisher "Marcus Behel"
 #define MyAppURL "http://mb3hel.github.io/arpirobot"
 #define MyAppExeName "ArPiRobot-DeployTool.exe"
@@ -26,7 +26,7 @@ LicenseFile=..\..\COPYING
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=..\dist\
-OutputBaseFilename=DeployTool-Setup-{#MyAppVersion}
+OutputBaseFilename=ArPiRobot-DeployTool-Windows-x64
 SetupIconFile=..\..\res\icon.ico
 UninstallDisplayIcon={app}\icon.ico
 Compression=lzma

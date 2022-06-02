@@ -1,4 +1,4 @@
-name: Build Linux
+name: Build Linux (Source)
 on: [workflow_dispatch]
 jobs:
   Build:
@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: sudo apt-get install python3-setuptools python3-wheel
-      - run: python3 -m pip install -r requirements.txt
+      - run: python3 -m pip install -U -r requirements.txt
       - working-directory: ./packaging
         run: ./linux_source.sh --tar yes --deb yes --python python3
       - uses: actions/upload-artifact@v2

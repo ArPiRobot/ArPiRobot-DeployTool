@@ -2,4 +2,4 @@
 
 DIR=$(realpath $(dirname $0))
 cd "$DIR"
-env/bin/python src/main.py
+env/bin/python src/main.py -name ArPiRobot-DeployTool
