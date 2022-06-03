@@ -1,8 +1,8 @@
 from typing import Dict, List
 
-from PySide6.QtCore import QSize, QFile, QIODevice, QDirIterator, QFileInfo, QDir, QSettings
-from PySide6.QtGui import QTextDocument, QAbstractTextDocumentLayout
-from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QApplication, QStyle, QStyleFactory
+from PySide6.QtCore import QFile, QIODevice, QDir, QSettings, Qt
+from PySide6.QtGui import QPalette, QColor
+from PySide6.QtWidgets import  QApplication, QStyleFactory
 
 
 WIFI_COUNTRY_CODES = ["AF", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BO", "BQ", "BA", "BW", "BV", "BR", "IO", "BN", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CX", "CC", "CO", "KM", "CG", "CD", "CK", "CR", "CI", "HR", "CU", "CW", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "SZ", "ET", "FK", "FO", "FJ", "FI", "FR", "GF", "PF", "TF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HM", "VA", "HN", "HK", "HU", "IS", "IN", "ID", "IR", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KP", "KR", "KW", "KG", "LA", "LV", "LB", "LS", "LR", "LY", "LI", "LT", "LU", "MO", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "YT", "MX", "FM", "MD", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MK", "MP", "NO", "OM", "PK", "PW", "PS", "PA", "PG", "PY", "PE", "PH", "PN", "PL", "PT", "PR", "QA", "RE", "RO", "RU", "RW", "BL", "SH", "KN", "LC", "MF", "PM", "VC", "WS", "SM", "ST", "SA", "SN", "RS", "SC", "SL", "SG", "SX", "SK", "SI", "SB", "SO", "ZA", "GS", "SS", "ES", "LK", "SD", "SR", "SJ", "SE", "CH", "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "UM", "US", "UY", "UZ", "VU", "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW", "AX"]
@@ -11,26 +11,55 @@ WIFI_COUNTRY_CODES = ["AF", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR"
 class ThemeManager:
     def __init__(self):
         self.system_theme = ""
+        self.system_palette = None
+        self.fusion_light_palette = None
+        self.fusion_dark_palette = None
         self.default_font_size = 9
         self.app = None
 
     def set_app(self, app: QApplication):
         self.app = app
         self.system_theme = self.app.style().name()
+        self.system_palette = self.app.palette()
+        self.app.setStyle(QStyleFactory.create("Fusion"))
+        self.fusion_light_palette = self.app.palette()
+        self.fusion_dark_palette = QPalette()
+        self.fusion_dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        self.fusion_dark_palette.setColor(QPalette.WindowText, Qt.white)
+        self.fusion_dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        self.fusion_dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        self.fusion_dark_palette.setColor(QPalette.ToolTipBase, QColor(42, 130, 218))
+        self.fusion_dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+        self.fusion_dark_palette.setColor(QPalette.Text, Qt.white)
+        self.fusion_dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        self.fusion_dark_palette.setColor(QPalette.ButtonText, Qt.white)
+        self.fusion_dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        self.fusion_dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        self.fusion_dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+        # self.fusion_dark_palette.setColor(QPalette.Active, QPalette.Button, QColor(128, 128, 128).darker())
+        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
+        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
+        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
+        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.Light, QColor(53, 53, 53))
     
     @property
     def themes(self) -> List[str]:
         return [
             "Custom Light",
             "Custom Dark",
-            "Fusion",
+            "Fusion Light",
+            "Fusion Dark",
             "System"
         ]
     
     def apply_theme(self, theme: str, larger_fonts: bool):
         base_theme = ""
         stylesheet = ""
+        palette = QPalette()
         if theme == "Custom Light" or theme == "Custom Dark":
+            # Use default fusion palette with this theme
+            palette = self.fusion_light_palette
+
             # Load stylesheet
             stylesheet_file = QFile(":/custom-theme/stylesheet.qss")
             if stylesheet_file.open(QIODevice.ReadOnly):
@@ -46,16 +75,22 @@ class ThemeManager:
                     stylesheet = stylesheet.replace("@{0}@".format(parts[0]), parts[1])
                 vars_file.close()
             base_theme = "Fusion"
-        elif theme == "Fusion":
+        elif theme == "Fusion Light":
             base_theme = "Fusion"
             stylesheet = ""
+            palette = self.fusion_light_palette
+        elif theme == "Fusion Dark":
+            base_theme = "Fusion"
+            palette = self.fusion_dark_palette
         else:
             base_theme = self.system_theme
             stylesheet = ""
+            palette = self.system_palette
         
         # Apply theme
         self.app.setStyle(base_theme)
         self.app.setStyleSheet(stylesheet)
+        self.app.setPalette(palette)
 
         # Support larger fonts
         size = 11 if larger_fonts else 9
@@ -78,7 +113,7 @@ class SettingsManager:
 
         self.__DEFAULT_ROBOT_IP = "192.168.10.1"
         self.__DEFAULT_USER = "pi"
-        self.__DEFAULT_THEME = "Light"
+        self.__DEFAULT_THEME = "Custom Light"
         self.__DEFAULT_LARGE_FONTS = False
         self.__DEFAULT_LONG_TIMEOUT = False
         self.__DEFAULT_PROJ_FOLDER = ""
