@@ -19,10 +19,30 @@ class ThemeManager:
 
     def set_app(self, app: QApplication):
         self.app = app
+        
         self.system_theme = self.app.style().objectName()
         self.system_palette = self.app.palette()
+
         self.app.setStyle(QStyleFactory.create("Fusion"))
-        self.fusion_light_palette = self.app.palette()
+        
+        self.fusion_light_palette = QPalette()
+        self.fusion_light_palette.setColor(QPalette.Window, QColor.fromRgbF(0.937255, 0.937255, 0.937255, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.WindowText, QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Base, QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.AlternateBase, QColor.fromRgbF(0.968627, 0.968627, 0.968627, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.ToolTipBase, QColor.fromRgbF(1.000000, 1.000000, 0.862745, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.ToolTipText, QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Text, QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Button, QColor.fromRgbF(0.937255, 0.937255, 0.937255, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.ButtonText, QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Link, QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Highlight, QColor.fromRgbF(0.188235, 0.549020, 0.776471, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.HighlightedText, QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor.fromRgbF(0.745098, 0.745098, 0.745098, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor.fromRgbF(0.745098, 0.745098, 0.745098, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Disabled, QPalette.Text, QColor.fromRgbF(0.745098, 0.745098, 0.745098, 1.000000))
+        self.fusion_light_palette.setColor(QPalette.Disabled, QPalette.Light, QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000))
+
         self.fusion_dark_palette = QPalette()
         self.fusion_dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
         self.fusion_dark_palette.setColor(QPalette.WindowText, Qt.white)
@@ -36,7 +56,6 @@ class ThemeManager:
         self.fusion_dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
         self.fusion_dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
         self.fusion_dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-        # self.fusion_dark_palette.setColor(QPalette.Active, QPalette.Button, QColor(128, 128, 128).darker())
         self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
         self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
         self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
