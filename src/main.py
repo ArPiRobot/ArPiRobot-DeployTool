@@ -11,7 +11,15 @@ QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
 import qtpy
+api = ""
 if qtpy.PYSIDE2:
+    api = "pyside2"
+elif qtpy.PYSIDE6:
+    api = "pyside6"
+else:
+    raise Exception("PyQt is not supported. Run using PySide2 or PySide6!")
+
+if api == "pyside2":
     try:
         # Older versions of QT5 may not support this
         # Only needed on QT5. Default on QT6.
