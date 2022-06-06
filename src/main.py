@@ -9,6 +9,16 @@ from util import theme_manager, settings_manager
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
+import qtpy
+if qtpy.PYSIDE2:
+    try:
+        # Older versions of QT5 may not support this
+        # Only needed on QT5. Default on QT6.
+        QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    except:
+        pass
+
 QApplication.setAttribute(Qt.AA_DontUseNativeMenuBar)
 
 # TODO: Stdout and Stderr redirect to log file (along with log data shown in DS log window)
