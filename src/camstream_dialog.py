@@ -1,24 +1,12 @@
 
 from qtpy.QtWidgets import QDialog, QMessageBox
-from qtpy.QtGui import QIntValidator, QDoubleValidator
+from qtpy.QtGui import QIntValidator, QDoubleValidator, QRegularExpressionValidator
 from ui_camstream_dialog import Ui_CamstreamDialog
 from util import settings_manager
 import re
 
-
-try:
-    from qtpy.QtGui import QRegularExpressionValidator
-    use_old_regexp = False
-except:
-    # PySide2 on Ubuntu 20.04 doesn't have QRegularExpressionValidator for some reason?
-    from qtpy.QtGui import QRegExpValidator
-    from qtpy.QtCore import QRegExp
-    use_old_regexp = True
-
-
 class CamstreamDialog(QDialog):
     def __init__(self, parent = None) -> None:
-        global use_old_regexp
         super().__init__(parent=parent)
 
         self.ui = Ui_CamstreamDialog()
@@ -28,10 +16,7 @@ class CamstreamDialog(QDialog):
         self.ui.txt_height.setValidator(QIntValidator(0, 4320, self))
         self.ui.txt_framerate.setValidator(QIntValidator(0, 360, self))
         self.ui.txt_gain.setValidator(QDoubleValidator(0.0, 100.0, 2, self))
-        if not use_old_regexp:
-            self.ui.txt_bitrate.setValidator(QRegularExpressionValidator(r"[0-9]*", self))
-        else:
-            self.ui.txt_bitrate.setValidator(QRegExpValidator(QRegExp(r"[0-9]*", self)))
+        self.ui.txt_bitrate.setValidator(QRegularExpressionValidator(r"[0-9]*", self))
         self.ui.txt_quality.setValidator(QIntValidator(0, 100, self))
         self.ui.txt_port.setValidator(QIntValidator(0, 65535, self))
 

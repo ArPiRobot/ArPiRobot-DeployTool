@@ -5,9 +5,9 @@ import re
 from threading import local
 import traceback
 from typing import Any, Callable, List, Optional
-from qtpy.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from qtpy.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QValidator
-from qtpy.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QWidget
+from qtpy.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
+from qtpy.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
 from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTPClient
@@ -30,17 +30,6 @@ import json
 import pathlib
 import platform
 from enum import Enum, auto
-
-
-try:
-    from qtpy.QtGui import QRegularExpressionValidator
-    from qtpy.QtCore import QRegularExpression
-    use_old_regexp = False
-except:
-    # PySide2 on Ubuntu 20.04 doesn't have QRegularExpressionValidator for some reason?
-    from qtpy.QtGui import QRegExpValidator
-    from qtpy.QtCore import QRegExp
-    use_old_regexp = True
 
 
 
@@ -87,13 +76,19 @@ class AcceptMissingKeyPolicy(MissingHostKeyPolicy):
         pass
 
 
+class WifiPassValidator(QRegularExpressionValidator):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setRegularExpression(QRegularExpression(r"[^\x20-\x7E]+$"))
+
+
 class WifiSsidValidator(QValidator):
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent=parent)
     
     def validate(self, input: str, pos: int) -> object:
         if len(input) > 32:
-            return QValidator.Invalid
+            return QRegularExpressionValidator.Invalid
         input_bytes = list(input.encode())
         for b in input_bytes:
             # Printable ASCII range
@@ -107,55 +102,29 @@ class WifiSsidValidator(QValidator):
 
 
 class WifiPskValidator(QValidator):
-        def __init__(self, parent: Optional[QObject] = None):
-            super().__init__(parent=parent)
-        
-        def validate(self, input: str, pos: int) -> object:
-            if len(input) > 63:
-                return QValidator.Invalid
-            input_bytes = list(input.encode())
-            for b in input_bytes:
-                # Printable ASCII range
-                if b < 32 or b > 126:
-                    return QValidator.Invalid
-            return QValidator.Acceptable
-
-
-if use_old_regexp:
-    # Ubuntu 20.04 PySide2 does not have QRegularExpression / QRegularExpressionValidator?
-    class WifiCountryValidator(QRegExpValidator):
-        def __init__(self, parent: Optional[QObject] = None) -> None:
-            super().__init__(parent=parent)
-            self.setRegExp(QRegExp("[A-Z]*"))
-        
-        def validate(self, input: str, pos: int) -> object:
-            if len(input) > 2:
-                return QValidator.Invalid
-            return super().validate(input, pos)
+    def __init__(self, parent: Optional[QObject] = None):
+        super().__init__(parent=parent)
     
-
-    class WifiPassValidator(QRegExpValidator):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-            self.setRegExp(QRegExp(r"[^\x20-\x7E]+$"))
-    
-else:
-    # These should generally be used
-    class WifiCountryValidator(QRegularExpressionValidator):
-        def __init__(self, parent: Optional[QObject] = None) -> None:
-            super().__init__(parent=parent)
-            self.setRegularExpression(QRegularExpression("[A-Z]*"))
-        
-        def validate(self, input: str, pos: int) -> object:
-            if len(input) > 2:
+    def validate(self, input: str, pos: int) -> object:
+        if len(input) > 63:
+            return QRegularExpressionValidator.Invalid
+        input_bytes = list(input.encode())
+        for b in input_bytes:
+            # Printable ASCII range
+            if b < 32 or b > 126:
                 return QValidator.Invalid
-            return super().validate(input, pos)
+        return QValidator.Acceptable
 
 
-    class WifiPassValidator(QRegularExpressionValidator):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-            self.setRegularExpression(QRegularExpression(r"[^\x20-\x7E]+$"))
+class WifiCountryValidator(QRegularExpressionValidator):
+    def __init__(self, parent: Optional[QObject] = None) -> None:
+        super().__init__(parent=parent)
+        self.setRegularExpression(QRegularExpression("[A-Z]*"))
+    
+    def validate(self, input: str, pos: int) -> object:
+        if len(input) > 2:
+            return QRegularExpressionValidator.Invalid
+        return super().validate(input, pos)
         
 
 
