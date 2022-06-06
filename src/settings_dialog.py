@@ -1,5 +1,5 @@
 
-from PySide6.QtWidgets import QDialog
+from qtpy.QtWidgets import QDialog
 from ui_settings_dialog import Ui_SettingsDialog
 from util import settings_manager, theme_manager
 

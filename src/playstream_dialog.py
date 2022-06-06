@@ -1,8 +1,8 @@
 from typing import Optional
 from ui_playstream_dialog import Ui_PlayStreamDialog
-from PySide6.QtWidgets import QDialog, QWidget
-from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QCloseEvent
+from qtpy.QtWidgets import QDialog, QWidget
+from qtpy.QtCore import QTimer, Qt
+from qtpy.QtGui import QCloseEvent
 import subprocess
 import signal
 

@@ -1,6 +1,6 @@
 
-from PySide6.QtWidgets import QDialog
-from PySide6.QtGui import QTextCursor
+from qtpy.QtWidgets import QDialog
+from qtpy.QtGui import QTextCursor
 from ui_log_dialog import Ui_LogDialog
 
 

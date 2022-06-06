@@ -1,6 +1,6 @@
 
-from PySide6.QtWidgets import QDialog, QMessageBox
-from PySide6.QtGui import QIntValidator, QDoubleValidator, QRegularExpressionValidator
+from qtpy.QtWidgets import QDialog, QMessageBox
+from qtpy.QtGui import QIntValidator, QDoubleValidator, QRegularExpressionValidator
 from ui_camstream_dialog import Ui_CamstreamDialog
 from util import settings_manager
 import re
@@ -27,7 +27,7 @@ class CamstreamDialog(QDialog):
             dialog.setText(self.tr("Name the config before saving."))
             dialog.setWindowTitle(self.tr("Configuration not Named"))
             dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+            dialog.exec_()
         else:
             return super().accept()
     

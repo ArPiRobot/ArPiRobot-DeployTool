@@ -1,5 +1,5 @@
-from PySide6.QtCore import QFile
-from PySide6.QtWidgets import QDialog
+from qtpy.QtCore import QFile
+from qtpy.QtWidgets import QDialog
 from ui_about_dialog import Ui_AboutDialog
 
 
