@@ -1,5 +1,6 @@
 
 from ast import Tuple
+from genericpath import isdir
 import socket
 import re
 from threading import local
@@ -441,21 +442,15 @@ class DeployToolWindow(QMainWindow):
             # First line of output is make version [VERSION]
             self.ui.txt_make_version.setText(cmd.stdout.readline().decode()[9:].strip())
         
-        # Check for installed toolchain
+        # Check for installed toolchains
+        found_toolchains = []
         path = QDir.homePath() + "/.arpirobot/toolchain/"
-        target = "Invalid Toolchain"
-        if(QFileInfo(path).exists()):
-            if os.path.exists(path + "/bin"):
-                for file in os.listdir(path + "/bin"):
-                    if file.endswith("-gcc"):
-                        target = file[:-4]
-                        break
-                    if file.endswith("-gcc.exe"):
-                        target = file[:-8]
-                        break
-            self.ui.txt_toolchain.setText(target)
-        else:
-            self.ui.txt_toolchain.setText("Not Installed")
+        for f in os.listdir(path):
+            print(f)
+            if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
+                found_toolchains.append(f)
+        self.ui.txt_toolchain.setText(", ".join(found_toolchains))
+
 
         # Find any python interpreters in path. List versions
         versions = []
@@ -616,25 +611,30 @@ class DeployToolWindow(QMainWindow):
 
     def do_install_toolchain_package(self, filename: str):
         tmp_path = QDir.homePath() + "/.arpirobot/toolchain-tmp"
-        final_path = QDir.homePath() + "/.arpirobot/toolchain"
         
-        # Delete old toolchain if installed
+        
         if os.path.exists(tmp_path):
             shutil.rmtree(tmp_path)
-        if os.path.exists(final_path):
-            shutil.rmtree(final_path)
 
         # Extract archive to the toolchain directory
         shutil.unpack_archive(filename, tmp_path)
 
-        dirs = os.listdir(tmp_path)
-        if len(dirs) == 1:
-            # Handle archives that have a single root directory containing the toolchain
-            shutil.move(tmp_path + "/" + dirs[0], final_path)
-        else:
-            shutil.move(tmp_path, final_path)
-            
+        # Determine final directory (toolchain/device)
+        what_path = "{}/what.txt".format(tmp_path)
+        if not os.path.exists(what_path):
+            raise Exception("Archive does not contain 'what.txt' file.")
+        with open(what_path, 'r') as f:
+            what = f.readline().strip()
+        if not what.startswith("toolchain/"):
+            raise Exception("Not a valid toolchain archive.")
+        final_path = QDir.homePath() + "/.arpirobot/toolchain/{0}".format(what[10:])
 
+        # Delete old toolchain if installed
+        if os.path.exists(final_path):
+            shutil.rmtree(final_path)
+
+        # Move directory
+        shutil.move(tmp_path, final_path)
 
     def convert_formats(self, formats) -> str:
         fmt_str = ""
