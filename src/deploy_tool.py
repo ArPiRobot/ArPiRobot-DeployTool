@@ -445,11 +445,15 @@ class DeployToolWindow(QMainWindow):
         # Check for installed toolchains
         found_toolchains = []
         path = QDir.homePath() + "/.arpirobot/toolchain/"
-        for f in os.listdir(path):
-            print(f)
-            if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
-                found_toolchains.append(f)
-        self.ui.txt_toolchain.setText(", ".join(found_toolchains))
+        if os.path.exists(path):
+            for f in os.listdir(path):
+                print(f)
+                if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
+                    found_toolchains.append(f)
+        if len(found_toolchains) == 0:
+            self.ui.txt_toolchain.setText("No toolchain(s) installed.")
+        else:
+            self.ui.txt_toolchain.setText(", ".join(found_toolchains))
 
 
         # Find any python interpreters in path. List versions
