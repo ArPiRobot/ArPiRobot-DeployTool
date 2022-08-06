@@ -447,7 +447,6 @@ class DeployToolWindow(QMainWindow):
         path = QDir.homePath() + "/.arpirobot/toolchain/"
         if os.path.exists(path):
             for f in os.listdir(path):
-                print(f)
                 if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
                     found_toolchains.append(f)
         if len(found_toolchains) == 0:
