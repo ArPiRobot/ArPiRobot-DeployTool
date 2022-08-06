@@ -10,7 +10,7 @@ rm -rf AppDir squashfs-root
 
 # Download python appimage if one does not already exist
 if [[ ! -f python.appimage ]]; then
-    wget https://github.com/niess/python-appimage/releases/download/python3.10/python3.10.4-cp310-cp310-manylinux2014_x86_64.AppImage -O python.appimage
+    wget https://github.com/niess/python-appimage/releases/download/python3.10/python3.10.5-cp310-cp310-manylinux2014_x86_64.AppImage -O python.appimage
 fi
 
 # Download appimagetool appimage if one does not already exist
