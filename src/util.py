@@ -112,7 +112,7 @@ class SettingsManager:
         self.__LAST_PROJ_FOLDER_KEY = "proj-folder"
 
         self.__DEFAULT_ROBOT_IP = "192.168.10.1"
-        self.__DEFAULT_USER = "pi"
+        self.__DEFAULT_USER = "arpirobot"
         self.__DEFAULT_THEME = "Custom Light"
         self.__DEFAULT_LARGE_FONTS = False
         self.__DEFAULT_LONG_TIMEOUT = False
