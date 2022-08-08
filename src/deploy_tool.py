@@ -1209,6 +1209,7 @@ class DeployToolWindow(QMainWindow):
     ############################################################################
     
     def write_camstream_config(self, name: str, config: str):
+        username = self.ui.txt_username.text()
         orig_state = self.do_writable_check()
         if orig_state != WritableState.ReadWrite:
             self.make_robot_writable()
@@ -1216,7 +1217,7 @@ class DeployToolWindow(QMainWindow):
         sftp = None
         try:
             sftp = self.ssh.open_sftp()
-            with sftp.open("/home/pi/camstream/{0}.txt".format(name), "w") as file:
+            with sftp.open("/home/{1}/camstream/{0}.txt".format(name, username), "w") as file:
                 file.write(config.encode())
             sftp.close()
         except (SSHException, SFTPError) as e:
@@ -1237,6 +1238,7 @@ class DeployToolWindow(QMainWindow):
             self.populate_streams()
     
     def delete_camstream(self):
+        username = self.ui.txt_username.text()
         dialog = QMessageBox(parent=self)
         dialog.setIcon(QMessageBox.Question)
         dialog.setText(self.tr("Are you sure you want to delete '{0}'?".format(self.ui.combox_stream_source.currentText())))
@@ -1251,7 +1253,7 @@ class DeployToolWindow(QMainWindow):
             sftp = None
             try:
                 sftp = self.ssh.open_sftp()
-                sftp.remove("/home/pi/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText()))
+                sftp.remove("/home/{1}/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText(), username))
                 sftp.close()
             except (SSHException, SFTPError) as e:
                 print(e)
@@ -1264,11 +1266,12 @@ class DeployToolWindow(QMainWindow):
             self.populate_streams()
     
     def edit_camstream(self):
+        username = self.ui.txt_username.text()
         if self.ui.combox_stream_source.currentText() != "":
             sftp = None
             try:
                 sftp = self.ssh.open_sftp()
-                with sftp.open("/home/pi/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText()), "r") as file:
+                with sftp.open("/home/{1}/camstream/{0}.txt".format(self.ui.combox_stream_source.currentText(), username), "r") as file:
                     config = file.read().decode()
                 dialog = CamstreamDialog(self)
                 dialog.set_config_name(self.ui.combox_stream_source.currentText())
@@ -1303,9 +1306,10 @@ class DeployToolWindow(QMainWindow):
     def do_populate_streams(self):
         # Load list of streams from the remote device
         sftp = None
+        username = self.ui.txt_username.text()
         try:
             sftp = self.ssh.open_sftp()
-            paths = self.sftp_list_directory(sftp, "/home/pi/camstream/")
+            paths = self.sftp_list_directory(sftp, "/home/{0}/camstream/".format(username))
             sftp.close()
         except (SSHException, SFTPError) as e:
             print(e)
@@ -1440,10 +1444,11 @@ class DeployToolWindow(QMainWindow):
             dialog.exec()
             return
 
+        username = self.ui.txt_username.text()
         sftp = None
         try:
             sftp = self.ssh.open_sftp()
-            with sftp.open("/home/pi/camstream/{0}.txt".format(stream), "r") as file:
+            with sftp.open("/home/{1}/camstream/{0}.txt".format(stream, username), "r") as file:
                 selected_config = file.read().decode()
             sftp.close()
         except (SSHException, SFTPError) as e:
