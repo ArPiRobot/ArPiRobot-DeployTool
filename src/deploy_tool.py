@@ -798,12 +798,19 @@ class DeployToolWindow(QMainWindow):
             _, stdout, _ = self.ssh.exec_command("mount | grep \"on / \"")
         except SSHException:
             return WritableState.Unknown
-        line = stdout.readline()
-        if line.find("ro") > -1:
-            return WritableState.Readonly
-        elif line.find("rw") > -1:
-            return WritableState.ReadWrite
-        else:
+        line = stdout.readline().strip()
+        opts_list = []
+        try:
+            spos = line.index("(")
+            line = line[spos+1:-1]
+            opts_list = line.split(",")
+            if "ro" in opts_list:
+                return WritableState.Readonly
+            elif "rw" in opts_list:
+                return WritableState.ReadWrite
+            else:
+                return WritableState.Unknown
+        except:
             return WritableState.Unknown
 
     def custom_glob(self, expression: str, base_path: str, old_dt_compat: bool) -> List[str]:
