@@ -120,7 +120,7 @@
            <item row="7" column="1">
             <widget class="QLabel" name="label_23">
              <property name="text">
-              <string>ArPiRobot Toolchain</string>
+              <string>ArPiRobot Toolchains</string>
              </property>
             </widget>
            </item>
@@ -1292,7 +1292,7 @@
      <x>0</x>
      <y>0</y>
      <width>750</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
