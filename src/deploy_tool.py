@@ -641,7 +641,7 @@ class DeployToolWindow(QMainWindow):
 
         # Allow all toolchain binaries to execute on macos
         if platform.system() == "Darwin":
-            os.system("zsh -c 'chmod +x {}/**/bin/*'".format(final_path))
+            os.system("zsh -c 'chmod -R +x {}'".format(final_path))
             os.system("zsh -c 'xattr -dr {}'".format(final_path))
 
     def convert_formats(self, formats) -> str:
