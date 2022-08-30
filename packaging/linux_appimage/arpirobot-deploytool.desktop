@@ -7,6 +7,6 @@ Comment=Code deployment and configuration tool for ArPiRobot robots.
 Icon=arpirobot-deploytool
 Categories=
 Terminal=false
-X-AppImage-Version=0.4.2-beta4
+X-AppImage-Version=0.4.2-beta5
 X-AppImage-Name=ArPiRobot-DeployTool
 X-AppImage-Arch=x86_64
