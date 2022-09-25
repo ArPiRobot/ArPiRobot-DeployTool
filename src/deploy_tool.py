@@ -397,6 +397,96 @@ class DeployToolWindow(QMainWindow):
         task.task_exception.connect(self.handle_populate_this_pc_exec)
         self.start_task(task)
 
+    # Copied from cpython shutil source
+    # https://github.com/python/cpython/blob/main/Lib/shutil.py
+    # Adapted too return all instances of the command in the path
+    # Instead of just the first one found
+    # Mimics behavior of Linux "which -a"
+    def which_all(self, cmd, mode=os.F_OK | os.X_OK, path=None):
+        # Check that a given file can be accessed with the correct mode.
+        # Additionally check that `file` is not a directory, as on Windows
+        # directories pass the os.access check.
+        def _access_check(fn, mode):
+            return (os.path.exists(fn) and os.access(fn, mode)
+                    and not os.path.isdir(fn))
+        """Given a command, mode, and a PATH string, return the path which
+        conforms to the given mode on the PATH, or None if there is no such
+        file.
+        `mode` defaults to os.F_OK | os.X_OK. `path` defaults to the result
+        of os.environ.get("PATH"), or can be overridden with a custom search
+        path.
+        """
+        # If we're given a path with a directory part, look it up directly rather
+        # than referring to PATH directories. This includes checking relative to the
+        # current directory, e.g. ./script
+        if os.path.dirname(cmd):
+            if _access_check(cmd, mode):
+                return cmd
+            return None
+
+        use_bytes = isinstance(cmd, bytes)
+
+        if path is None:
+            path = os.environ.get("PATH", None)
+            if path is None:
+                try:
+                    path = os.confstr("CS_PATH")
+                except (AttributeError, ValueError):
+                    # os.confstr() or CS_PATH is not available
+                    path = os.defpath
+            # bpo-35755: Don't use os.defpath if the PATH environment variable is
+            # set to an empty string
+
+        # PATH='' doesn't match, whereas PATH=':' looks in the current directory
+        if not path:
+            return None
+
+        if use_bytes:
+            path = os.fsencode(path)
+            path = path.split(os.fsencode(os.pathsep))
+        else:
+            path = os.fsdecode(path)
+            path = path.split(os.pathsep)
+
+        if sys.platform == "win32":
+            # The current directory takes precedence on Windows.
+            curdir = os.curdir
+            if use_bytes:
+                curdir = os.fsencode(curdir)
+            if curdir not in path:
+                path.insert(0, curdir)
+
+            # PATHEXT is necessary to check on Windows.
+            pathext_source = os.getenv("PATHEXT") or _WIN_DEFAULT_PATHEXT
+            pathext = [ext for ext in pathext_source.split(os.pathsep) if ext]
+
+            if use_bytes:
+                pathext = [os.fsencode(ext) for ext in pathext]
+            # See if the given file matches any of the expected path extensions.
+            # This will allow us to short circuit when given "python.exe".
+            # If it does match, only test that one, otherwise we have to try
+            # others.
+            if any(cmd.lower().endswith(ext.lower()) for ext in pathext):
+                files = [cmd]
+            else:
+                files = [cmd + ext for ext in pathext]
+        else:
+            # On other platforms you don't have things like PATHEXT to tell you
+            # what file suffixes are executable, so just pass on cmd as-is.
+            files = [cmd]
+
+        seen = set()
+        found = []
+        for dir in path:
+            normdir = os.path.normcase(dir)
+            if not normdir in seen:
+                seen.add(normdir)
+                for thefile in files:
+                    name = os.path.join(dir, thefile)
+                    if _access_check(name, mode):
+                        found.append(name)
+        return found
+
     def do_populate_this_pc(self):
         # Load CoreLib version
         path = QDir.homePath() + "/.arpirobot/corelib/version.txt"
@@ -463,23 +553,17 @@ class DeployToolWindow(QMainWindow):
         else:
             self.ui.txt_toolchain.setText(", ".join(found_toolchains))
 
-
         # Find any python interpreters in path. List versions
         versions = []
-        interpreters = []
+        interpreters: List[str] = []
         python_exe_names = ["python", "python3"]
         for i in range(20):
             python_exe_names.append("python3.{0}".format(i))
             python_exe_names.append("python3{0}".format(i))
         for name in python_exe_names:
-            if platform.system() == "Windows":
-                cmd = subprocess.Popen(["where.exe", name], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-                interpreters.extend(cmd.stdout.readlines())
-            else:
-                cmd = subprocess.Popen(["which", "-a", name], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                interpreters.extend(cmd.stdout.readlines())
+            interpreters.extend(self.which_all(name))
         for interpreter in interpreters:
-            cmd = subprocess.Popen([interpreter.decode().strip(), "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd = subprocess.Popen([interpreter.replace("\r", "").replace("\n", ""), "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Output: Python [VERSION]
             versions.append(cmd.stdout.readline().decode()[7:].strip())
         # Remove duplicate version numbers
