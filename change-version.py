@@ -30,4 +30,4 @@ with open("res/version.txt", 'w') as file:
 # Change in package resources
 replaceInFileRegex("packaging/windows/win_installer.iss", "#define MyAppVersion \".*\"", "#define MyAppVersion \"" + sys.argv[1] + "\"")
 replaceInFileRegex("packaging/linux_source/deb_control", "Version: .*\n", "Version: " + sys.argv[1] + "\n")
-replaceInFileRegex("packaging/linux_appimage/arpirobot-deploytool.desktop", "X-AppImage-Version=.*\n", "X-AppImage-Version={0}\n".format(sys.argv[1]))
+# replaceInFileRegex("packaging/linux_appimage/arpirobot-deploytool.desktop", "X-AppImage-Version=.*\n", "X-AppImage-Version={0}\n".format(sys.argv[1]))
