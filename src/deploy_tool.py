@@ -448,7 +448,16 @@ class DeployToolWindow(QMainWindow):
         if os.path.exists(path):
             for f in os.listdir(path):
                 if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
-                    found_toolchains.append(f)
+                    verfile = "{0}/{1}/version.txt".format(path, f)
+                    if os.path.isfile(verfile):
+                        try:
+                            with open(verfile, 'r') as verfileobj:
+                                version = verfileobj.readline().replace("\r", "").replace("\n", "")
+                        except:
+                            version = "unknown"
+                    else:
+                        version = "unknown"
+                    found_toolchains.append("{} ({})".format(f, version))
         if len(found_toolchains) == 0:
             self.ui.txt_toolchain.setText("No toolchain(s) installed.")
         else:
