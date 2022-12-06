@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from PySide6.QtCore import QFile, QIODevice, QDir, QSettings, Qt
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor, QFont
 from PySide6.QtWidgets import  QApplication, QStyleFactory
 
 
@@ -11,90 +11,36 @@ WIFI_COUNTRY_CODES = ["AF", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR"
 class ThemeManager:
     def __init__(self):
         self.system_theme = ""
-        self.system_palette = None
-        self.fusion_light_palette = None
-        self.fusion_dark_palette = None
-        self.default_font_size = 9
+        self.default_font_size: float = 9
+        self.large_font_factor = 1.2
         self.app = None
 
     def set_app(self, app: QApplication):
         self.app = app
         self.system_theme = self.app.style().name()
-        self.system_palette = self.app.palette()
-        self.app.setStyle(QStyleFactory.create("Fusion"))
-        self.fusion_light_palette = self.app.palette()
-        self.fusion_dark_palette = QPalette()
-        self.fusion_dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        self.fusion_dark_palette.setColor(QPalette.WindowText, Qt.white)
-        self.fusion_dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-        self.fusion_dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-        self.fusion_dark_palette.setColor(QPalette.ToolTipBase, QColor(42, 130, 218))
-        self.fusion_dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-        self.fusion_dark_palette.setColor(QPalette.Text, Qt.white)
-        self.fusion_dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-        self.fusion_dark_palette.setColor(QPalette.ButtonText, Qt.white)
-        self.fusion_dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-        self.fusion_dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-        self.fusion_dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-        # self.fusion_dark_palette.setColor(QPalette.Active, QPalette.Button, QColor(128, 128, 128).darker())
-        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(128, 128, 128))
-        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(128, 128, 128))
-        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.Text, QColor(128, 128, 128))
-        self.fusion_dark_palette.setColor(QPalette.Disabled, QPalette.Light, QColor(53, 53, 53))
+        self.default_font_size = QFont().pointSizeF()
     
     @property
     def themes(self) -> List[str]:
         return [
-            "Custom Light",
-            "Custom Dark",
-            "Fusion Light",
-            "Fusion Dark",
-            "System"
+            "System",
+            "Fusion"
         ]
     
     def apply_theme(self, theme: str, larger_fonts: bool):
-        base_theme = ""
-        stylesheet = ""
-        palette = QPalette()
-        if theme == "Custom Light" or theme == "Custom Dark":
-            # Use default fusion palette with this theme
-            palette = self.fusion_light_palette
-
-            # Load stylesheet
-            stylesheet_file = QFile(":/custom-theme/stylesheet.qss")
-            if stylesheet_file.open(QIODevice.ReadOnly):
-                stylesheet = bytes(stylesheet_file.readAll()).decode()
-                stylesheet_file.close()
-            
-            # Make substitutions from csv file to use correct variant
-            vars_file = QFile(":/custom-theme/{0}.csv".format("Light" if theme == "Custom Light" else "Dark"))
-            if vars_file.open(QIODevice.ReadOnly):
-                for line in bytes(vars_file.readAll()).decode().splitlines(False):
-                    # Index 0 = variable, Index 1 = value
-                    parts = line.replace(", ", ",").split(",")
-                    stylesheet = stylesheet.replace("@{0}@".format(parts[0]), parts[1])
-                vars_file.close()
-            base_theme = "Fusion"
-        elif theme == "Fusion Light":
-            base_theme = "Fusion"
-            stylesheet = ""
-            palette = self.fusion_light_palette
-        elif theme == "Fusion Dark":
-            base_theme = "Fusion"
-            palette = self.fusion_dark_palette
+        # Apply style
+        if theme == "Fusion":
+            self.app.setStyle("Fusion")
         else:
-            base_theme = self.system_theme
-            stylesheet = ""
-            palette = self.system_palette
-        
-        # Apply theme
-        self.app.setStyle(base_theme)
-        self.app.setStyleSheet(stylesheet)
-        self.app.setPalette(palette)
+            self.app.setStyle(self.system_theme)
 
         # Support larger fonts
-        size = 11 if larger_fonts else 9
+        size = self.default_font_size
+        if larger_fonts:
+            size *= self.large_font_factor
         self.app.setStyleSheet("{0}\n{1}".format(self.app.styleSheet(), "*{{font-size: {0}pt}}".format(size)))
+        
+
 
 class SettingsManager:
     """

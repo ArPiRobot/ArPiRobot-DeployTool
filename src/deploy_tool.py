@@ -241,6 +241,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.txt_username.setText(settings_manager.robot_user)
         self.ui.cbx_longer_timeouts.setChecked(settings_manager.longer_timeouts)
 
+
     def closeEvent(self, event: QCloseEvent):
         self.ssh_connected = False
         self.ssh.close()
@@ -253,6 +254,7 @@ class DeployToolWindow(QMainWindow):
         return super().closeEvent(event)
 
     def open_settings(self):
+        was_larger_fonts = settings_manager.larger_fonts
         dialog = SettingsDialog(self)
         res = dialog.exec()
         if res == QDialog.Accepted:
