@@ -70,9 +70,12 @@ if platform.system() == "Linux":
         cursor_size = int(subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "cursor-size"]))
         text_scale_factor = float(subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "text-scaling-factor"]))
         cursor_theme = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "cursor-theme"]).decode()
-        os.environ['QT_FONT_DPI'] = str(int(text_scale_factor * 96))
-        os.environ['XCURSOR_SIZE'] = str(cursor_size)
-        os.environ['XCURSOR_THEME'] = cursor_theme[1:-2]
+        if 'QT_FONT_DPI' not in os.environ:
+            os.environ['QT_FONT_DPI'] = str(int(text_scale_factor * 96))
+        if 'XCURSOR_SIZE' not in os.environ:
+            os.environ['XCURSOR_SIZE'] = str(cursor_size)
+        if 'XCURSOR_THEME' not in os.environ:
+            os.environ['XCURSOR_THEME'] = cursor_theme[1:-2]
 
 
 # Nothing special for app creation needed. Create as usual.
