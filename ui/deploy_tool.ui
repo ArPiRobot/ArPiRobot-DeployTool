@@ -88,7 +88,7 @@
            <item row="9" column="4">
             <widget class="QLabel" name="label_27">
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://www.python.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;center&gt;&lt;a href=&quot;https://www.python.org/&quot;&gt;&lt;span&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/center&gt;</string>
              </property>
              <property name="openExternalLinks">
               <bool>true</bool>
@@ -134,7 +134,7 @@
            <item row="5" column="4">
             <widget class="QLabel" name="label_22">
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://cmake.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;center&gt;&lt;a href=&quot;https://cmake.org/&quot;&gt;&lt;span&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/center&gt;</string>
              </property>
              <property name="openExternalLinks">
               <bool>true</bool>
@@ -242,7 +242,7 @@
            <item row="6" column="4">
             <widget class="QLabel" name="lbl_make_download">
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;a href=&quot;https://sourceforge.net/projects/ezwinports/files/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;center&gt;&lt;a href=&quot;https://sourceforge.net/projects/ezwinports/files/&quot;&gt;&lt;span&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/center&gt;</string>
              </property>
              <property name="openExternalLinks">
               <bool>true</bool>
