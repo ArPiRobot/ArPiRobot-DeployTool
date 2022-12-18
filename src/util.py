@@ -59,7 +59,7 @@ class SettingsManager:
 
         self.__DEFAULT_ROBOT_IP = "192.168.10.1"
         self.__DEFAULT_USER = "arpirobot"
-        self.__DEFAULT_THEME = "Custom Light"
+        self.__DEFAULT_THEME = "System"
         self.__DEFAULT_LARGE_FONTS = False
         self.__DEFAULT_LONG_TIMEOUT = False
         self.__DEFAULT_PROJ_FOLDER = ""
