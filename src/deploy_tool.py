@@ -490,6 +490,10 @@ class DeployToolWindow(QMainWindow):
         return found
 
     def do_populate_this_pc(self):
+        # Show then hide too fast causes issues on Ubuntu 22.04 
+        # (and likely other systems using XCB backend)
+        time.sleep(0.1)
+
         # Load CoreLib version
         path = QDir.homePath() + "/.arpirobot/corelib/version.txt"
         if QFileInfo(path).exists():
