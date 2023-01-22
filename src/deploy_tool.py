@@ -605,10 +605,11 @@ class DeployToolWindow(QMainWindow):
 
     def handle_update_installed(self, res: Any):
         self.hide_progress()
-        try:
-            self.set_pythonpath()
-        except:
-            print(traceback.format_exc())
+        # No longer needed. Extension generates env file
+        # try:
+        #     self.set_pythonpath()
+        # except:
+        #     print(traceback.format_exc())
         self.populate_this_pc()
 
     def handle_update_failure(self, e: Exception):
