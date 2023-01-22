@@ -1,5 +1,5 @@
 Package: ArPiRobot-DeployTool
-Version: 0.4.2-beta7
+Version: 1.0.0-rc1
 Section: base
 Priority: optional
 Architecture: all
