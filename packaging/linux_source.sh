@@ -68,6 +68,7 @@ cp -r ../src/ ./dist/ArPiRobot-DeployTool/
 cp ../requirements.txt ./dist/ArPiRobot-DeployTool/
 cp -r ../res/icon.png ./dist/ArPiRobot-DeployTool/
 cp ../COPYING ./dist/ArPiRobot-DeployTool
+cp ../COPYING.LESSER ./dist/ArPiRobot-DeployTool
 cp linux_source/install.sh ./dist/ArPiRobot-DeployTool
 cp linux_source/uninstall.sh ./dist/ArPiRobot-DeployTool
 cp linux_source/start.sh ./dist/ArPiRobot-DeployTool

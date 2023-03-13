@@ -22,7 +22,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
-LicenseFile=..\..\COPYING
+LicenseFile=..\..\COPYING.LESSER
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=..\dist\
@@ -42,6 +42,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: ".\dist\ArPiRobot-DeployTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "..\..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\COPYING.LESSER"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\res\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
