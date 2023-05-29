@@ -251,6 +251,10 @@ class DeployToolWindow(QMainWindow):
         p = app.palette()
         for cg in [QPalette.ColorGroup.Active, QPalette.ColorGroup.Current, QPalette.ColorGroup.Disabled, QPalette.ColorGroup.Inactive]:
             p.setColor(cg, QPalette.ColorRole.Base, p.color(cg, QPalette.ColorRole.Base))
+
+        # Fixes some elements turning wrong color when window looses focus
+        p.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Button, p.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Button))
+
         app.setPalette(p)
 
     def __set_font_size(self):
@@ -267,6 +271,8 @@ class DeployToolWindow(QMainWindow):
         # This is a workaround
         self.ui.tabs_main.setTabVisible(0, False)
         self.ui.tabs_main.setTabVisible(0, True)
+        self.ui.tabs_main.setCurrentIndex(0)
+        self.ui.tabs_main.setCurrentIndex(1)
 
     def closeEvent(self, event: QCloseEvent):
         self.ssh_connected = False
