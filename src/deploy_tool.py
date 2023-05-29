@@ -7,8 +7,8 @@ from threading import local
 import traceback
 from typing import Any, Callable, List, Optional
 from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtGui import QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator
-from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QTextEdit, QWidget
+from PySide6.QtGui import QShowEvent, QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator, QFont
+from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QApplication, QWidget
 from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTPClient
@@ -20,7 +20,7 @@ from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
 from paramiko.client import SSHClient, MissingHostKeyPolicy
 from paramiko.ssh_exception import SSHException
-from util import settings_manager, theme_manager, WIFI_COUNTRY_CODES
+from util import settings_manager, WIFI_COUNTRY_CODES
 from zipfile import ZipFile
 import time
 import os
@@ -241,6 +241,22 @@ class DeployToolWindow(QMainWindow):
         self.ui.txt_username.setText(settings_manager.robot_user)
         self.ui.cbx_longer_timeouts.setChecked(settings_manager.longer_timeouts)
 
+        self.__set_font_size()
+
+    def __set_font_size(self):
+        size = QFont().pointSizeF()
+        if settings_manager.larger_fonts:
+            size *= 1.2
+        app = QApplication.instance()
+        app.setStyleSheet("{0}\n{1}".format(app.styleSheet(), "*{{font-size: {0}pt}}".format(size)))
+
+    def showEvent(self, event: QShowEvent):
+        # TODO: Debug properly.
+        # For some reason the "This PC" tab is not shown on Windows as of QT 6.5
+        # May affect other OSes too (untested)
+        # This is a workaround
+        self.ui.tabs_main.setTabVisible(0, False)
+        self.ui.tabs_main.setTabVisible(0, True)
 
     def closeEvent(self, event: QCloseEvent):
         self.ssh_connected = False
@@ -254,12 +270,11 @@ class DeployToolWindow(QMainWindow):
         return super().closeEvent(event)
 
     def open_settings(self):
-        was_larger_fonts = settings_manager.larger_fonts
         dialog = SettingsDialog(self)
         res = dialog.exec()
         if res == QDialog.Accepted:
             dialog.save_settings()
-            theme_manager.apply_theme(settings_manager.theme, settings_manager.larger_fonts)
+            self.__set_font_size()
 
     def open_about(self):
         dialog = AboutDialog(self)
@@ -459,7 +474,7 @@ class DeployToolWindow(QMainWindow):
                 path.insert(0, curdir)
 
             # PATHEXT is necessary to check on Windows.
-            pathext_source = os.getenv("PATHEXT") or _WIN_DEFAULT_PATHEXT
+            pathext_source = os.getenv("PATHEXT") or ".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WS;.MSC"
             pathext = [ext for ext in pathext_source.split(os.pathsep) if ext]
 
             if use_bytes:

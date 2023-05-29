@@ -11,7 +11,6 @@ from PySide6.QtGui import QGuiApplication, QPalette, QColor
 from PySide6.QtCore import Qt, QFile, QIODevice, QEventLoop
 
 from deploy_tool import DeployToolWindow
-from util import theme_manager, settings_manager
 
 QApplication.setAttribute(Qt.AA_DontUseNativeMenuBar)
 
@@ -24,44 +23,6 @@ except AttributeError:
     pass
 
 app = None
-
-# QT 6.4 introduced experimental support for dark mode on windows
-# Note that the windows them is terrible for now, but Fusion looks good
-if platform.system() == "Windows":
-    import winreg
-    path = winreg.HKEY_CURRENT_USER
-    try:
-        key = winreg.OpenKeyEx(path, r"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize")
-        value = winreg.QueryValueEx(key, r"AppsUseLightTheme")
-        if value[0] == 0:
-            # TODO: When QT 6.5 released, there should be better support for this
-            #       Probably a new dark / light mode API
-            #       Also windowsvista theme should support dark mode
-            #       Will likely also be auto detected / applied
-            #       In other words, all of this is probably removed with QT 6.5
-            sys.argv += ['-platform', 'windows:darkmode=2']
-            app = QApplication(sys.argv)
-            app.setStyle("Fusion")
-            dark_palette = QPalette()
-            dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.WindowText, Qt.white)
-            dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-            dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
-            dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-            dark_palette.setColor(QPalette.Text, Qt.white)
-            dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.ButtonText, Qt.white)
-            dark_palette.setColor(QPalette.BrightText, Qt.red)
-            dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-            dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-            dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-            app.setPalette(dark_palette)
-            app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
-        if key:
-            winreg.CloseKey(key)
-    except:
-        pass
 
 # Fix gnome wayland things
 if platform.system() == "Linux":
@@ -94,12 +55,8 @@ if platform.system() == "Linux":
             os.environ['XCURSOR_THEME'] = cursor_theme[1:-2]
 
 
-# Nothing special for app creation needed. Create as usual.
-if app is None:
-    app = QApplication(sys.argv)
-
-theme_manager.set_app(app)
-theme_manager.apply_theme(settings_manager.theme, settings_manager.larger_fonts)
+app = QApplication(sys.argv)
+app.setStyle("fusion")
 
 dt = DeployToolWindow()
 
