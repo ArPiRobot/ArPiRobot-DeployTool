@@ -7,7 +7,7 @@ from threading import local
 import traceback
 from typing import Any, Callable, List, Optional
 from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtGui import QShowEvent, QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator, QFont
+from PySide6.QtGui import QPalette, QShowEvent, QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator, QFont
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QApplication, QWidget
 from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
@@ -241,7 +241,17 @@ class DeployToolWindow(QMainWindow):
         self.ui.txt_username.setText(settings_manager.robot_user)
         self.ui.cbx_longer_timeouts.setChecked(settings_manager.longer_timeouts)
 
+        self.__on_color_change()
         self.__set_font_size()
+
+    def __on_color_change(self):
+        # Somehow, this fixes checkboxes being blue on windows dark theme.
+        # Not really sure why, but it does.
+        app = QApplication.instance()
+        p = app.palette()
+        for cg in [QPalette.ColorGroup.Active, QPalette.ColorGroup.Current, QPalette.ColorGroup.Disabled, QPalette.ColorGroup.Inactive]:
+            p.setColor(cg, QPalette.ColorRole.Base, p.color(cg, QPalette.ColorRole.Base))
+        app.setPalette(p)
 
     def __set_font_size(self):
         size = QFont().pointSizeF()
