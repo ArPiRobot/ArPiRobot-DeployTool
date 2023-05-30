@@ -245,17 +245,7 @@ class DeployToolWindow(QMainWindow):
         self.__set_font_size()
 
     def __on_color_change(self):
-        # Somehow, this fixes checkboxes being blue on windows dark theme.
-        # Not really sure why, but it does.
-        app = QApplication.instance()
-        p = app.palette()
-        for cg in [QPalette.ColorGroup.Active, QPalette.ColorGroup.Current, QPalette.ColorGroup.Disabled, QPalette.ColorGroup.Inactive]:
-            p.setColor(cg, QPalette.ColorRole.Base, p.color(cg, QPalette.ColorRole.Base))
-
-        # Fixes some elements turning wrong color when window looses focus
-        p.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Button, p.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Button))
-
-        app.setPalette(p)
+        pass
 
     def __set_font_size(self):
         size = QFont().pointSizeF()

@@ -7,7 +7,7 @@ import subprocess
 
 
 from PySide6.QtWidgets import QApplication, QStyleFactory
-from PySide6.QtGui import QGuiApplication, QPalette, QColor
+from PySide6.QtGui import QGuiApplication, QPalette, QColor, QStyleHints
 from PySide6.QtCore import Qt, QFile, QIODevice, QEventLoop
 
 from deploy_tool import DeployToolWindow
@@ -57,6 +57,25 @@ if platform.system() == "Linux":
 
 app = QApplication(sys.argv)
 app.setStyle("fusion")
+
+# Theme fixes
+if platform.system() == "Windows":
+    # Somehow, this fixes checkboxes being blue on windows dark theme.
+    # Not really sure why, but it does.
+    app = QApplication.instance()
+    p = app.palette()
+    for cg in [QPalette.ColorGroup.Active, QPalette.ColorGroup.Current, QPalette.ColorGroup.Disabled, QPalette.ColorGroup.Inactive]:
+        p.setColor(cg, QPalette.ColorRole.Base, p.color(cg, QPalette.ColorRole.Base))
+    app.setPalette(p)
+elif platform.system() == "Darwin":
+    # TODO: Button text color wrong when inactive
+    pass
+else:
+    is_gnome = os.environ['XDG_CURRENT_DESKTOP'].find("GNOME") != -1
+    if is_gnome:
+        # TODO: Many "Disabled" colors are wrong
+        # TODO: Sometimes (manjaro but not ubuntu), inactive text color (buttontext) is wrong like macos
+        pass
 
 dt = DeployToolWindow()
 
