@@ -72,9 +72,20 @@ if app.styleHints().colorScheme() == Qt.ColorScheme.Dark:
         # TODO: Button text color wrong when inactive
         pass
     else:
-        is_gnome = os.environ['XDG_CURRENT_DESKTOP'].find("GNOME") != -1
-        if is_gnome:
-            # TODO: Many "Disabled" colors are wrong
+        is_plasma = os.environ['XDG_CURRENT_DESKTOP'].find("KDE") != -1
+        is_lxqt = os.environ['XDG_CURRENT_DESKTOP'].find("LXQt") != -1
+
+        if not is_lxqt and not is_plasma:
+            print("Correcting linux dark colors")
+            # Some disabled and inactive colors are wrong on gtk desktops
+            # This does not impact plasma (and presumably would not impact LXQt)
+            # https://bugreports.qt.io/browse/QTBUG-113486
+            p = app.palette()
+            p.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Button, p.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Button))
+            p.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, p.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Button).lighter())
+            # TODO: Button borders
+            app.setPalette(p)
+
             # TODO: Sometimes (manjaro but not ubuntu), inactive text color (buttontext) is wrong like macos
             pass
 
