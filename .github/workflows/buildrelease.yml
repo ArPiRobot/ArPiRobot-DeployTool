@@ -1,4 +1,4 @@
-name: Build MacOS (x64)
+name: Build Release
 on: 
   workflow_dispatch
   # release:
