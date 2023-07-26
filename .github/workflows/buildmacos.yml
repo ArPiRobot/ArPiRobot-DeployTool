@@ -2,7 +2,7 @@ name: Build MacOS (x64)
 on: [workflow_dispatch]
 jobs:
   Build:
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v3
