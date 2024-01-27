@@ -200,7 +200,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.tabs_main.currentChanged.connect(self.tab_changed)
 
         self.ui.btn_install_update.clicked.connect(self.install_update_package)
-        self.ui.btn_install_toolchain.clicked.connect(self.install_toolchain_package)
+        self.ui.btn_install_sysroot.clicked.connect(self.install_sysroot_package)
 
         self.ui.btn_connect.clicked.connect(self.toggle_connection)
 
@@ -559,9 +559,9 @@ class DeployToolWindow(QMainWindow):
             # First line of output is make version [VERSION]
             self.ui.txt_make_version.setText(cmd.stdout.readline().decode()[9:].strip())
         
-        # Check for installed toolchains
-        found_toolchains = []
-        path = QDir.homePath() + "/.arpirobot/toolchain/"
+        # Check for installed sysroots
+        found_sysroots = []
+        path = QDir.homePath() + "/.arpirobot/sysroots/"
         if os.path.exists(path):
             for f in os.listdir(path):
                 if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
@@ -574,11 +574,11 @@ class DeployToolWindow(QMainWindow):
                             version = "unknown"
                     else:
                         version = "unknown"
-                    found_toolchains.append("{} ({})".format(f, version))
-        if len(found_toolchains) == 0:
-            self.ui.txt_toolchain.setText("No toolchain(s) installed.")
+                    found_sysroots.append("{} ({})".format(f, version))
+        if len(found_sysroots) == 0:
+            self.ui.txt_sysroot.setText("No sysroots installed.")
         else:
-            self.ui.txt_toolchain.setText(", ".join(found_toolchains))
+            self.ui.txt_sysroot.setText(", ".join(found_sysroots))
 
         # Find any python interpreters in path. List versions
         versions = []
@@ -733,39 +733,39 @@ class DeployToolWindow(QMainWindow):
         with open(filename, "a") as fp:
             fp.write("{0}={1}:${0}\n".format(var, value))
 
-    def do_install_toolchain_package(self, filename: str):
-        tmp_path = QDir.homePath() + "/.arpirobot/toolchain-tmp"
+    def do_install_sysroot_package(self, filename: str):
+        tmp_path = QDir.homePath() + "/.arpirobot/sysroot-tmp"
         
         
         if os.path.exists(tmp_path):
             shutil.rmtree(tmp_path)
 
-        # Extract archive to the toolchain directory
+        # Extract archive to the sysroot directory
         shutil.unpack_archive(filename, tmp_path)
 
-        # Determine final directory (toolchain/device)
+        # Determine final directory (sysroot/device)
         what_path = "{}/what.txt".format(tmp_path)
         if not os.path.exists(what_path):
             raise Exception("Archive does not contain 'what.txt' file.")
         with open(what_path, 'r') as f:
             what = f.readline().strip()
-        if not what.startswith("toolchain/"):
-            raise Exception("Not a valid toolchain archive.")
-        final_path = QDir.homePath() + "/.arpirobot/toolchain/{0}".format(what[10:])
+        if not what.startswith("sysroot/"):
+            raise Exception("Not a valid sysroot archive.")
+        final_path = QDir.homePath() + "/.arpirobot/sysroot/{0}".format(what[10:])
 
-        # Delete old toolchain if installed
+        # Delete old sysroot if installed
         if os.path.exists(final_path):
             shutil.rmtree(final_path)
 
         # Move directory
         shutil.move(tmp_path, final_path)
 
-        # Allow all toolchain binaries to execute on macos
+        # Allow all sysroot binaries to execute on macos
         if platform.system() == "Darwin":
             os.system("zsh -c 'chmod -R +x {}'".format(final_path))
             os.system("zsh -c 'xattr -dr {}'".format(final_path))
 
-        # Allow all toolchain binaries to execute on linux
+        # Allow all sysroot binaries to execute on linux
         if platform.system() == "Linux":
             os.system("zsh -c 'chmod -R +x {}'".format(final_path))
 
@@ -784,31 +784,31 @@ class DeployToolWindow(QMainWindow):
             fmt_str = "{0} *.{1}".format(fmt_str, f[0])
         return fmt_str
 
-    def handle_toolchain_success(self, res):
+    def handle_sysroot_success(self, res):
          self.hide_progress()
          self.populate_this_pc()
 
-    def handle_toolchain_failure(self, e):
+    def handle_sysroot_failure(self, e):
         self.hide_progress()
         print(e)
         dialog = QMessageBox(parent=self)
         dialog.setIcon(QMessageBox.Warning)
         dialog.setText(self.tr("Make sure the archive exists, is a known format, and is not corrupted."))
-        dialog.setWindowTitle(self.tr("Error Installing Toolchain"))
+        dialog.setWindowTitle(self.tr("Error Installing Sysroot"))
         dialog.setStandardButtons(QMessageBox.Ok)
         dialog.exec()
 
-    def install_toolchain_package(self):
+    def install_sysroot_package(self):
         fmt_str = self.convert_formats(shutil.get_archive_formats())
         filename = QFileDialog.getOpenFileName(self, self.tr("Open Update Package"), QDir.homePath(), self.tr("Archives (") + fmt_str + ")")[0]
         if filename == "":
             return
 
         # Perform installation of update package on background thread
-        self.show_progress("Installing Toolchain", "Extracting toolchain package")
-        task = Task(self, self.do_install_toolchain_package, filename)
-        task.task_complete.connect(self.handle_toolchain_success)
-        task.task_exception.connect(self.handle_toolchain_failure)
+        self.show_progress("Installing Sysroot", "Extracting sysroot package")
+        task = Task(self, self.do_install_sysroot_package, filename)
+        task.task_complete.connect(self.handle_sysroot_success)
+        task.task_exception.connect(self.handle_sysroot_failure)
         self.start_task(task)
 
     ############################################################################

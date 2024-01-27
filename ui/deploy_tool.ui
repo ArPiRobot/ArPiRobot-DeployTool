@@ -72,14 +72,14 @@
             <number>3</number>
            </property>
            <item row="7" column="4">
-            <widget class="QPushButton" name="btn_install_toolchain">
+            <widget class="QPushButton" name="btn_install_sysroot">
              <property name="text">
-              <string>Install Toolchain Package</string>
+              <string>Install Sysroot Package</string>
              </property>
             </widget>
            </item>
            <item row="7" column="2" colspan="2">
-            <widget class="QLineEdit" name="txt_toolchain">
+            <widget class="QLineEdit" name="txt_sysroot">
              <property name="readOnly">
               <bool>true</bool>
              </property>
@@ -120,7 +120,7 @@
            <item row="7" column="1">
             <widget class="QLabel" name="label_23">
              <property name="text">
-              <string>ArPiRobot Toolchains</string>
+              <string>ArPiRobot Sysroots</string>
              </property>
             </widget>
            </item>
@@ -235,7 +235,7 @@
            <item row="6" column="1">
             <widget class="QLabel" name="label_20">
              <property name="text">
-              <string>GNU Make Version</string>
+              <string>Ninja Version</string>
              </property>
             </widget>
            </item>
