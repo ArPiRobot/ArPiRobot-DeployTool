@@ -240,9 +240,9 @@
             </widget>
            </item>
            <item row="6" column="4">
-            <widget class="QLabel" name="lbl_make_download">
+            <widget class="QLabel" name="lbl_ninja_download">
              <property name="text">
-              <string>&lt;center&gt;&lt;a href=&quot;https://sourceforge.net/projects/ezwinports/files/&quot;&gt;&lt;span&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/center&gt;</string>
+              <string>&lt;center&gt;&lt;a href=&quot;https://ninja-build.org/&quot;&gt;&lt;span&gt;Download&lt;/span&gt;&lt;/a&gt;&lt;/center&gt;</string>
              </property>
              <property name="openExternalLinks">
               <bool>true</bool>
@@ -253,7 +253,7 @@
             </widget>
            </item>
            <item row="6" column="2" colspan="2">
-            <widget class="QLineEdit" name="txt_make_version"/>
+            <widget class="QLineEdit" name="txt_ninja_version"/>
            </item>
           </layout>
          </widget>
