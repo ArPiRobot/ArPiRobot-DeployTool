@@ -552,7 +552,7 @@ class DeployToolWindow(QMainWindow):
         
         # Check for installed sysroots
         found_sysroots = []
-        path = QDir.homePath() + "/.arpirobot/sysroots/"
+        path = QDir.homePath() + "/.arpirobot/sysroot/"
         if os.path.exists(path):
             for f in os.listdir(path):
                 if os.path.isdir("{0}/{1}".format(path, f)) and not f.startswith("."):
@@ -742,7 +742,7 @@ class DeployToolWindow(QMainWindow):
             what = f.readline().strip()
         if not what.startswith("sysroot/"):
             raise Exception("Not a valid sysroot archive.")
-        final_path = QDir.homePath() + "/.arpirobot/sysroot/{0}".format(what[10:])
+        final_path = QDir.homePath() + "/.arpirobot/{0}".format(what)
 
         # Delete old sysroot if installed
         if os.path.exists(final_path):
