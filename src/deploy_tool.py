@@ -133,9 +133,9 @@ class DeployToolWindow(QMainWindow):
 
     change_progress_msg_sig = Signal(str)
     append_log_sig = Signal(str)
-    set_versions_sig = Signal(str, str, str)
+    set_versions_sig = Signal(str, str)
     update_status_sig = Signal(float, int, int, WritableState)
-    update_net_info_sig = Signal(str, str, str, str, str)
+    update_net_info_sig = Signal(str, str, str, str, str, str)
     clear_robot_log_sig = Signal()
 
     ############################################################################
@@ -1096,13 +1096,12 @@ class DeployToolWindow(QMainWindow):
     # Robot status tab
     ############################################################################
 
-    def do_set_versions(self, img_ver: str, py_ver: str, tool_ver: str):
+    def do_set_versions(self, img_ver: str, py_ver: str):
         self.ui.txt_image_version.setText(img_ver)
         self.ui.txt_python_version.setText(py_ver)
-        self.ui.txt_tools_version.setText(tool_ver)
 
-    def set_versions(self, img_ver: str, py_ver: str, tool_ver: str):
-        self.set_versions_sig.emit(img_ver, py_ver, tool_ver)
+    def set_versions(self, img_ver: str, py_ver: str):
+        self.set_versions_sig.emit(img_ver, py_ver)
 
     def do_update_status(self, cpu: float, mem_used: int, mem_avail: int, writable: WritableState):
         self.ui.pbar_cpu_usage.setValue(int(100.0 - cpu))
@@ -1123,8 +1122,7 @@ class DeployToolWindow(QMainWindow):
         _, stdout, _ = self.ssh.exec_command("dt-getversions.sh", timeout=self.command_timeout)
         img_version = stdout.readline().strip()
         py_version = stdout.readline().strip()
-        tool_version = stdout.readline().strip()
-        self.set_versions(img_version, py_version, tool_version)
+        self.set_versions(img_version, py_version)
 
         # Periodically read CPU usage, memory usage, and readonly status
         while self.ssh_connected:
@@ -1213,15 +1211,15 @@ class DeployToolWindow(QMainWindow):
     # Network settings tab
     ############################################################################
 
-    def do_update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str):
+    def do_update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str, band: str):
         self.ui.txt_hostname.setText(hostname)
         self.ui.txt_wifi_ssid.setText(ssid)
         self.ui.txt_wifi_pass.setText(password)
         self.ui.txt_wifi_country.setText(country)
         self.ui.txt_wifi_channel.setText(channel)
 
-    def update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str):
-        self.update_net_info_sig.emit(hostname, ssid, password, country, channel)
+    def update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str, band: str):
+        self.update_net_info_sig.emit(hostname, ssid, password, country, channel, band)
 
     def do_populate_network_settings(self):
         _, stdout_host, _ = self.ssh.exec_command("dt-hostname.sh", timeout=self.command_timeout)
@@ -1233,8 +1231,9 @@ class DeployToolWindow(QMainWindow):
         password = stdout_ap.readline().strip()
         country = stdout_ap.readline().strip()
         channel = stdout_ap.readline().strip()
+        band = stdout_ap.readline().strip()
 
-        self.update_network_info(hostname, ssid, password, country, channel)
+        self.update_network_info(hostname, ssid, password, country, channel, band)
 
     def populate_network_settings(self):
         self.show_progress(self.tr("Loading"), self.tr("Loading info from robot..."))
@@ -1243,12 +1242,12 @@ class DeployToolWindow(QMainWindow):
         task.task_exception.connect(lambda e: self.hide_progress())
         self.start_task(task)
     
-    def do_apply_network_settings(self, ssid: str, psk: str, country: str, channel: int):
+    def do_apply_network_settings(self, ssid: str, psk: str, country: str, channel: int, band: str):
         orig_state = self.do_writable_check()
         if orig_state != WritableState.ReadWrite:
             self.make_robot_writable()
 
-        _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}'  > /dev/null 2>&1".format(ssid, psk, country, channel),
+        _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}' '{4}'  > /dev/null 2>&1".format(ssid, psk, country, channel, band),
                 timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
 
@@ -1259,6 +1258,7 @@ class DeployToolWindow(QMainWindow):
         ssid = self.ui.txt_wifi_ssid.text()
         psk = self.ui.txt_wifi_pass.text()
         country = self.ui.txt_wifi_country.text()
+        band = "bg" # TODO: Implement UI for this
 
         try:
             channel = int(self.ui.txt_wifi_channel.text())
@@ -1297,7 +1297,7 @@ class DeployToolWindow(QMainWindow):
             dialog.exec()
         
         self.show_progress(self.tr("Applying Network Settings"), self.tr("Applying network setting changes on robot..."))
-        task = Task(self, self.do_apply_network_settings, ssid, psk, country, channel)
+        task = Task(self, self.do_apply_network_settings, ssid, psk, country, channel, band)
         task.task_complete.connect(lambda res: self.hide_progress())
         task.task_exception.connect(lambda e: self.hide_progress())
         self.start_task(task)

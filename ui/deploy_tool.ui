@@ -681,23 +681,6 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_12">
-             <property name="text">
-              <string>ArPiRobot Tools Version</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="txt_tools_version">
-             <property name="inputMask">
-              <string notr="true"/>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QLabel" name="label_13">
              <property name="text">
               <string>Python Version</string>
@@ -867,15 +850,43 @@
            <string>Robot Access Point</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_4">
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="txt_wifi_channel">
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_15">
+             <property name="text">
+              <string>Password</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>SSID (Name)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLineEdit" name="txt_wifi_ssid">
              <property name="inputMask">
               <string notr="true"/>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_17">
+             <property name="text">
+              <string>Channel (2.4GHz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
             <widget class="QLineEdit" name="txt_wifi_country">
+             <property name="inputMask">
+              <string notr="true"/>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QLineEdit" name="txt_wifi_pass">
              <property name="inputMask">
               <string notr="true"/>
              </property>
@@ -888,45 +899,17 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_15">
-             <property name="text">
-              <string>Password</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="txt_wifi_ssid">
-             <property name="inputMask">
-              <string notr="true"/>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>SSID (Name)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="txt_wifi_pass">
-             <property name="inputMask">
-              <string notr="true"/>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_17">
-             <property name="text">
-              <string>Channel (2.4 GHz)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0" colspan="2">
+           <item row="4" column="0" colspan="3">
             <widget class="QPushButton" name="btn_wifi_apply">
              <property name="text">
               <string>Apply</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="2">
+            <widget class="QLineEdit" name="txt_wifi_channel">
+             <property name="inputMask">
+              <string notr="true"/>
              </property>
             </widget>
            </item>
@@ -1327,7 +1310,6 @@
   <tabstop>txt_robot_log</tabstop>
   <tabstop>btn_copy_log</tabstop>
   <tabstop>txt_image_version</tabstop>
-  <tabstop>txt_tools_version</tabstop>
   <tabstop>txt_python_version</tabstop>
   <tabstop>btn_shutdown</tabstop>
   <tabstop>btn_reboot</tabstop>
