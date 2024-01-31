@@ -20,7 +20,7 @@ from about_dialog import AboutDialog
 from settings_dialog import SettingsDialog
 from paramiko.client import SSHClient, MissingHostKeyPolicy
 from paramiko.ssh_exception import SSHException
-from util import settings_manager, WIFI_COUNTRY_CODES
+from util import settings_manager, WIFI_COUNTRY_CODES, WIFI_COUNTRY_NAMES
 from zipfile import ZipFile
 import time
 import os
@@ -117,18 +117,6 @@ class WifiPskValidator(QValidator):
         return QValidator.Acceptable
 
 
-class WifiCountryValidator(QRegularExpressionValidator):
-    def __init__(self, parent: Optional[QObject] = None) -> None:
-        super().__init__(parent=parent)
-        self.setRegularExpression(QRegularExpression("[A-Z]*"))
-    
-    def validate(self, input: str, pos: int) -> object:
-        if len(input) > 2:
-            return QRegularExpressionValidator.Invalid
-        return super().validate(input, pos)
-        
-
-
 class DeployToolWindow(QMainWindow):
 
     change_progress_msg_sig = Signal(str)
@@ -158,8 +146,10 @@ class DeployToolWindow(QMainWindow):
 
         self.ui.txt_wifi_ssid.setValidator(WifiSsidValidator(self))
         self.ui.txt_wifi_pass.setValidator(WifiPskValidator(self))
-        self.ui.txt_wifi_country.setValidator(WifiCountryValidator(self))
-        self.ui.txt_wifi_channel.setValidator(QIntValidator(1, 14, self))
+        self.ui.txt_wifi_channel.setValidator(QIntValidator(0, 999, self))
+
+        # Populate country codes in combo box
+        self.ui.cbx_wifi_country.addItems(WIFI_COUNTRY_NAMES)
 
         # SSH setup and initial state
         self.ssh: SSHClient = SSHClient()
@@ -1215,7 +1205,12 @@ class DeployToolWindow(QMainWindow):
         self.ui.txt_hostname.setText(hostname)
         self.ui.txt_wifi_ssid.setText(ssid)
         self.ui.txt_wifi_pass.setText(password)
-        self.ui.txt_wifi_country.setText(country)
+        
+        idx = 0
+        if country in WIFI_COUNTRY_CODES:
+            idx = WIFI_COUNTRY_CODES.index(country)
+        self.ui.cbx_wifi_country.setCurrentIndex(idx)
+
         self.ui.txt_wifi_channel.setText(channel)
 
     def update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str, band: str):
@@ -1243,34 +1238,44 @@ class DeployToolWindow(QMainWindow):
         self.start_task(task)
     
     def do_apply_network_settings(self, ssid: str, psk: str, country: str, channel: int, band: str):
-        orig_state = self.do_writable_check()
-        if orig_state != WritableState.ReadWrite:
-            self.make_robot_writable()
+        # dt-wifi_ap.sh handles writable check and making rw if needed
+        # This is necessary because DT may drop comms due to network changes
+        # Thus nohup is used to run the script
+        # But as a result, the deploy tool doesn't know when the changes are actually applied
+        # And may make ro too soon
+        # orig_state = self.do_writable_check()
+        # if orig_state != WritableState.ReadWrite:
+        #     self.make_robot_writable()
 
         _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}' '{4}'  > /dev/null 2>&1".format(ssid, psk, country, channel, band),
                 timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
 
-        if orig_state == WritableState.Readonly:
-            self.make_robot_readonly()
+        # if orig_state == WritableState.Readonly:
+        #     self.make_robot_readonly()
 
     def apply_network_settings(self):
         ssid = self.ui.txt_wifi_ssid.text()
         psk = self.ui.txt_wifi_pass.text()
-        country = self.ui.txt_wifi_country.text()
+        country = WIFI_COUNTRY_CODES[self.ui.cbx_wifi_country.currentIndex()]
         band = "bg" # TODO: Implement UI for this
 
         try:
             channel = int(self.ui.txt_wifi_channel.text())
-            if channel < 1 or channel > 14:
-                raise Exception()
+            if band == "bg":
+                if channel < 0 or channel > 14:
+                    raise Exception()
+            elif band == "a":
+                if channel != 0 and (channel > 177 or channel < 36):
+                    raise Exception()
         except:
             dialog = QMessageBox(parent=self)
             dialog.setIcon(QMessageBox.Warning)
-            dialog.setText(self.tr("Wifi channel invalid! Channel must be a number between 1 and 14."))
+            dialog.setText(self.tr("Wifi channel invalid!"))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+            return
         
         if len(ssid) < 2:
             dialog = QMessageBox(parent=self)
@@ -1279,6 +1284,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+            return
         
         if len(psk) < 8:
             dialog = QMessageBox(parent=self)
@@ -1287,6 +1293,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+            return
         
         if len(country) < 2 or country not in WIFI_COUNTRY_CODES:
             dialog = QMessageBox(parent=self)
@@ -1295,6 +1302,7 @@ class DeployToolWindow(QMainWindow):
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
+            return
         
         self.show_progress(self.tr("Applying Network Settings"), self.tr("Applying network setting changes on robot..."))
         task = Task(self, self.do_apply_network_settings, ssid, psk, country, channel, band)
