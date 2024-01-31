@@ -1205,6 +1205,10 @@ class DeployToolWindow(QMainWindow):
         self.ui.txt_hostname.setText(hostname)
         self.ui.txt_wifi_ssid.setText(ssid)
         self.ui.txt_wifi_pass.setText(password)
+        if band == "bg":
+            self.ui.cbx_wifi_band.setCurrentIndex(0)
+        elif band == "a":
+            self.ui.cbx_wifi_band.setCurrentIndex(1)
         
         idx = 0
         if country in WIFI_COUNTRY_CODES:
@@ -1258,7 +1262,10 @@ class DeployToolWindow(QMainWindow):
         ssid = self.ui.txt_wifi_ssid.text()
         psk = self.ui.txt_wifi_pass.text()
         country = WIFI_COUNTRY_CODES[self.ui.cbx_wifi_country.currentIndex()]
-        band = "bg" # TODO: Implement UI for this
+        
+        band_idx = self.ui.cbx_wifi_band.currentIndex()
+        bands = ["bg", "a"]   # 2.4, 5.0
+        band = bands[band_idx]
 
         try:
             channel = int(self.ui.txt_wifi_channel.text())
