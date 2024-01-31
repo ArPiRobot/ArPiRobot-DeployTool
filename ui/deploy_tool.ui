@@ -922,7 +922,9 @@
             <widget class="QComboBox" name="cbx_wifi_band">
              <property name="toolTip">
               <string>2.4GHz (recommended) - longer range but slower speeds
-5.0GHz - shorter range but faster speeds</string>
+5.0GHz - shorter range but faster speeds
+
+Note: 5.0GHz does not work on all devices!</string>
              </property>
              <item>
               <property name="text">
