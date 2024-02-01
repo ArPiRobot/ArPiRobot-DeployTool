@@ -850,16 +850,28 @@ class DeployToolWindow(QMainWindow):
                 .format(str(e)))
         dialog.exec()
 
+    def handle_ssh_disconnect(self):
+        self.do_disconnect()
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText("Connection to the robot was lost.")
+        dialog.setWindowTitle("Disconnected")
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.exec()
+
     def check_ssh_connection(self):
-        if self.ssh_connected and not self.ssh.get_transport().is_active():
-            # Connection lost
-            self.do_disconnect()
-            dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
-            dialog.setText("Connection to the robot was lost.")
-            dialog.setWindowTitle("Disconnected")
-            dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
+        if self.ssh_connected:
+            if not self.ssh.get_transport().is_active():
+                self.handle_ssh_disconnect()
+            else:
+                # is_active doesn't always work (eg change WiFi network on Linux)
+                try:
+                    _, stdout, _ = self.ssh.exec_command("true", timeout=3)
+                    stdout.channel.recv_exit_status()
+                except:
+                    # Timed out (or failed to even open session). Disconnected.
+                    self.handle_ssh_disconnect()
+                
 
     def toggle_connection(self):
         if self.ssh_connected:
