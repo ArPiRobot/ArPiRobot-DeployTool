@@ -146,7 +146,6 @@ class DeployToolWindow(QMainWindow):
 
         self.ui.txt_wifi_ssid.setValidator(WifiSsidValidator(self))
         self.ui.txt_wifi_pass.setValidator(WifiPskValidator(self))
-        self.ui.txt_wifi_channel.setValidator(QIntValidator(0, 999, self))
 
         # Populate country codes in combo box
         self.ui.cbx_wifi_country.addItems(WIFI_COUNTRY_NAMES)
@@ -173,6 +172,10 @@ class DeployToolWindow(QMainWindow):
 
         # Active dialogs for playing streams
         self.camstreams: List[PlayStreamDialog] = []
+
+        # Store channels allowed for wifi
+        self.channels_24 = []
+        self.channels_50 = []
 
         # Signal / Slot setup
         self.change_progress_msg_sig.connect(self.do_change_progress_msg)
@@ -221,6 +224,9 @@ class DeployToolWindow(QMainWindow):
         self.ui.cbx_enable_rtsp.clicked.connect(self.enable_rtsp_changed)
         self.ui.btn_camstream_log.clicked.connect(self.show_camstream_log)
         self.ui.btn_rtsp_log.clicked.connect(self.show_rtsp_log)
+
+        self.ui.cbx_wifi_band.currentIndexChanged.connect(self.wifi_band_changed)
+        self.ui.cbx_wifi_country.currentIndexChanged.connect(self.wifi_country_changed)
 
         # Startup
         self.disable_robot_tabs()
@@ -1201,21 +1207,85 @@ class DeployToolWindow(QMainWindow):
     # Network settings tab
     ############################################################################
 
+    def parse_valid_channels(self):
+        _, stdout_caps, _ = self.ssh.exec_command("dt-wifi_caps.py", timeout=self.command_timeout)
+        for line in stdout_caps.readlines():
+            if line.startswith("2.4GHz: "):
+                self.channels_24 = eval(line.strip()[8:])
+            if line.startswith("5.0GHz: "):
+                self.channels_50 = eval(line.strip()[8:])
+            if line.startswith("2.4GHz Disabled: "):
+                channels_24_disabled = eval(line.strip()[17:])
+                for channel in channels_24_disabled:
+                    if channel in self.channels_24:
+                        self.channels_24.remove(channel)
+            if line.startswith("5.0GHz Disabled: "):
+                channels_50_disabled = eval(line.strip()[17:])
+                for channel in channels_50_disabled:
+                    if channel in self.channels_50:
+                        self.channels_50.remove(channel)
+
+    def do_change_country_code(self):
+        code = WIFI_COUNTRY_CODES[self.ui.cbx_wifi_country.currentIndex()]
+        _, stdout_regdom, _ = self.ssh.exec_command("dt-wifi_regdom.sh {}".format(code), timeout=self.command_timeout)
+        stdout_regdom.channel.recv_exit_status()
+
+        # Valid channels can change with country code
+        self.parse_valid_channels()
+
+        # If valid channels for the band change, need to rebuild channel options in UI
+        self.wifi_band_changed(self.ui.cbx_wifi_band.currentIndex())
+    
+    def wifi_country_changed_done(self, arg):
+        self.hide_progress()
+
+    def wifi_country_changed(self, index: int):
+        self.show_progress(self.tr("Changing Country"), self.tr("Changing wifi country code..."))
+        task = Task(self, self.do_change_country_code)
+        task.task_complete.connect(self.wifi_country_changed_done)
+        task.task_exception.connect(self.wifi_country_changed_done)
+        self.start_task(task)
+
+    def wifi_band_changed(self, index: int):
+        if index == 0:
+            self.ui.cbx_wifi_channel.clear()
+            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItems(self.channels_24)
+        elif index == 1:
+            self.ui.cbx_wifi_channel.clear()
+            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItems(self.channels_50)
+
     def do_update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str, band: str):
+        self.ui.cbx_wifi_band.clear()
+        if len(self.channels_24) != 0:
+            self.ui.cbx_wifi_band.addItem("2.4GHz")
+        if len(self.channels_50) != 0:
+            self.ui.cbx_wifi_band.addItem("5.0GHz")
+        
+        self.ui.cbx_wifi_channel.clear()
+
+        if channel == "0":
+            channel = "Auto"
+
         self.ui.txt_hostname.setText(hostname)
         self.ui.txt_wifi_ssid.setText(ssid)
         self.ui.txt_wifi_pass.setText(password)
         if band == "bg":
             self.ui.cbx_wifi_band.setCurrentIndex(0)
+            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItems(self.channels_24)
         elif band == "a":
             self.ui.cbx_wifi_band.setCurrentIndex(1)
+            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItems(self.channels_50)
         
         idx = 0
         if country in WIFI_COUNTRY_CODES:
             idx = WIFI_COUNTRY_CODES.index(country)
         self.ui.cbx_wifi_country.setCurrentIndex(idx)
 
-        self.ui.txt_wifi_channel.setText(channel)
+        self.ui.cbx_wifi_channel.setCurrentText(channel)
 
     def update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str, band: str):
         self.update_net_info_sig.emit(hostname, ssid, password, country, channel, band)
@@ -1223,15 +1293,19 @@ class DeployToolWindow(QMainWindow):
     def do_populate_network_settings(self):
         _, stdout_host, _ = self.ssh.exec_command("dt-hostname.sh", timeout=self.command_timeout)
         _, stdout_ap, _ = self.ssh.exec_command("dt-wifi_ap.sh", timeout=self.command_timeout)
+        _, stdout_regdom, _ = self.ssh.exec_command("dt-wifi_regdom.sh", timeout=self.command_timeout)
 
         hostname = stdout_host.readline().strip()
 
         ssid = stdout_ap.readline().strip()
         password = stdout_ap.readline().strip()
-        country = stdout_ap.readline().strip()
         channel = stdout_ap.readline().strip()
         band = stdout_ap.readline().strip()
 
+        country = stdout_regdom.readline().strip()
+
+        self.parse_valid_channels()
+        
         self.update_network_info(hostname, ssid, password, country, channel, band)
 
     def populate_network_settings(self):
@@ -1241,7 +1315,7 @@ class DeployToolWindow(QMainWindow):
         task.task_exception.connect(lambda e: self.hide_progress())
         self.start_task(task)
     
-    def do_apply_network_settings(self, ssid: str, psk: str, country: str, channel: int, band: str):
+    def do_apply_network_settings(self, ssid: str, psk: str, channel: int, band: str):
         # dt-wifi_ap.sh handles writable check and making rw if needed
         # This is necessary because DT may drop comms due to network changes
         # Thus nohup is used to run the script
@@ -1251,7 +1325,7 @@ class DeployToolWindow(QMainWindow):
         # if orig_state != WritableState.ReadWrite:
         #     self.make_robot_writable()
 
-        _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}' '{4}'  > /dev/null 2>&1".format(ssid, psk, country, channel, band),
+        _, stdout, _ = self.ssh.exec_command("nohup dt-wifi_ap.sh '{0}' '{1}' '{2}' '{3}' > /dev/null 2>&1".format(ssid, psk, channel, band),
                 timeout=self.command_timeout)
         stdout.channel.recv_exit_status()
 
@@ -1261,28 +1335,16 @@ class DeployToolWindow(QMainWindow):
     def apply_network_settings(self):
         ssid = self.ui.txt_wifi_ssid.text()
         psk = self.ui.txt_wifi_pass.text()
-        country = WIFI_COUNTRY_CODES[self.ui.cbx_wifi_country.currentIndex()]
+        channel = self.ui.cbx_wifi_channel.currentText()
+        if channel == "Auto":
+            channel = 0
+        else:
+            channel = int(channel)
+        # country = WIFI_COUNTRY_CODES[self.ui.cbx_wifi_country.currentIndex()]
         
         band_idx = self.ui.cbx_wifi_band.currentIndex()
         bands = ["bg", "a"]   # 2.4, 5.0
         band = bands[band_idx]
-
-        try:
-            channel = int(self.ui.txt_wifi_channel.text())
-            if band == "bg":
-                if channel < 0 or channel > 14:
-                    raise Exception()
-            elif band == "a":
-                if channel != 0 and (channel > 177 or channel < 36):
-                    raise Exception()
-        except:
-            dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
-            dialog.setText(self.tr("Wifi channel invalid!"))
-            dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
-            dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
-            return
         
         if len(ssid) < 2:
             dialog = QMessageBox(parent=self)
@@ -1301,18 +1363,9 @@ class DeployToolWindow(QMainWindow):
             dialog.setStandardButtons(QMessageBox.Ok)
             dialog.exec()
             return
-        
-        if len(country) < 2 or country not in WIFI_COUNTRY_CODES:
-            dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
-            dialog.setText(self.tr("Country code must be a valid two letter country code."))
-            dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
-            dialog.setStandardButtons(QMessageBox.Ok)
-            dialog.exec()
-            return
-        
+
         self.show_progress(self.tr("Applying Network Settings"), self.tr("Applying network setting changes on robot..."))
-        task = Task(self, self.do_apply_network_settings, ssid, psk, country, channel, band)
+        task = Task(self, self.do_apply_network_settings, ssid, psk, channel, band)
         task.task_complete.connect(lambda res: self.hide_progress())
         task.task_exception.connect(lambda e: self.hide_progress())
         self.start_task(task)

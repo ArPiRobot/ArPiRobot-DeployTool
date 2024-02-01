@@ -845,15 +845,54 @@
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string>WiFi Adapter</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_16">
+             <property name="minimumSize">
+              <size>
+               <width>85</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Country</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="cbx_wifi_country">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="groupBox_6">
           <property name="title">
            <string>Robot Access Point</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_4">
-           <item row="5" column="0" colspan="2">
-            <widget class="QPushButton" name="btn_wifi_apply">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_12">
              <property name="text">
-              <string>Apply</string>
+              <string>Band</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_17">
+             <property name="text">
+              <string>Channel</string>
              </property>
             </widget>
            </item>
@@ -861,6 +900,23 @@
             <widget class="QLineEdit" name="txt_wifi_pass">
              <property name="inputMask">
               <string notr="true"/>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="cbx_wifi_band">
+             <property name="toolTip">
+              <string>2.4GHz (recommended) - longer range but slower speeds
+5.0GHz - shorter range but faster speeds
+
+Supported options depend on robot's computer</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <widget class="QPushButton" name="btn_wifi_apply">
+             <property name="text">
+              <string>Apply</string>
              </property>
             </widget>
            </item>
@@ -878,68 +934,21 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_12">
-             <property name="text">
-              <string>Band</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_17">
-             <property name="text">
-              <string>Channel</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_16">
-             <property name="text">
-              <string>Country Code</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="txt_wifi_channel">
-             <property name="toolTip">
-              <string>0 = auto select (recommended)
-2.4GHz: 1-14 (not all allowed, depends on country)
-5.0GHz: 32-177 (not all allowed, depends on country)</string>
-             </property>
-             <property name="inputMask">
-              <string notr="true"/>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="0">
             <widget class="QLabel" name="label_14">
+             <property name="minimumSize">
+              <size>
+               <width>85</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="text">
               <string>SSID (Name)</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QComboBox" name="cbx_wifi_band">
-             <property name="toolTip">
-              <string>2.4GHz (recommended) - longer range but slower speeds
-5.0GHz - shorter range but faster speeds
-
-Note: 5.0GHz does not work on all devices!</string>
-             </property>
-             <item>
-              <property name="text">
-               <string>2.4GHz</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>5.0GHz</string>
-              </property>
-             </item>
-            </widget>
-           </item>
            <item row="2" column="1">
-            <widget class="QComboBox" name="cbx_wifi_country"/>
+            <widget class="QComboBox" name="cbx_wifi_channel"/>
            </item>
           </layout>
          </widget>
@@ -1346,7 +1355,6 @@ Note: 5.0GHz does not work on all devices!</string>
   <tabstop>btn_make_writable</tabstop>
   <tabstop>txt_hostname</tabstop>
   <tabstop>btn_change_hostname</tabstop>
-  <tabstop>txt_wifi_channel</tabstop>
   <tabstop>txt_wifi_ssid</tabstop>
   <tabstop>txt_wifi_pass</tabstop>
   <tabstop>btn_wifi_apply</tabstop>
