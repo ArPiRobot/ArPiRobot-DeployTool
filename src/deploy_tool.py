@@ -1665,7 +1665,7 @@ class DeployToolWindow(QMainWindow):
                 sftp.close()
 
         # Parse selected config to determine arguments for the playback script
-        selected_config = re.sub("\s", " ", selected_config)
+        selected_config = re.sub("\\s", " ", selected_config)
         items = selected_config.split(" ")
 
         netmode = "rtsp"
