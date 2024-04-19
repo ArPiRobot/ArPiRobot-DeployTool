@@ -752,7 +752,7 @@ class DeployToolWindow(QMainWindow):
 
                 # Allow all sysroot binaries to execute on linux
                 if platform.system() == "Linux":
-                    os.system("zsh -c 'chmod -R +x {}'".format(final_path))
+                    os.system("sh -c 'chmod -R +x {}'".format(final_path))
             else:
                 raise Exception("Not a valid sysroot archive.")
 
