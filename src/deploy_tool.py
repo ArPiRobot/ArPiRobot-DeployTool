@@ -2,7 +2,7 @@
 from ast import Tuple
 from genericpath import isdir
 import socket
-import re
+import tarfile
 from threading import local
 import traceback
 from typing import Any, Callable, List, Optional
@@ -29,6 +29,7 @@ import shutil
 import json
 import pathlib
 import platform
+import ctypes
 from enum import Enum, auto
 
 
@@ -706,40 +707,54 @@ class DeployToolWindow(QMainWindow):
             fp.write("{0}={1}:${0}\n".format(var, value))
 
     def do_install_sysroot_package(self, filename: str):
-        tmp_path = QDir.homePath() + "/.arpirobot/sysroot-tmp"
-        
-        
-        if os.path.exists(tmp_path):
-            shutil.rmtree(tmp_path)
+        # Find what.txt to verify this is a sysroot package and to determine where to extract it
+        with tarfile.open(filename) as tf:
+            if "what.txt" in tf.getnames():
+                # Construct destination
+                what = tf.extractfile("what.txt").readline().strip().decode()
+                final_path = QDir.homePath() + "/.arpirobot/{0}".format(what)
 
-        # Extract archive to the sysroot directory
-        shutil.unpack_archive(filename, tmp_path)
+                # Delete old sysroot if installed
+                if os.path.exists(final_path):
+                    shutil.rmtree(final_path)
+                
+                # Extract sysroot
+                tf.extractall(path=final_path)
 
-        # Determine final directory (sysroot/device)
-        what_path = "{}/what.txt".format(tmp_path)
-        if not os.path.exists(what_path):
-            raise Exception("Archive does not contain 'what.txt' file.")
-        with open(what_path, 'r') as f:
-            what = f.readline().strip()
-        if not what.startswith("sysroot/"):
-            raise Exception("Not a valid sysroot archive.")
-        final_path = QDir.homePath() + "/.arpirobot/{0}".format(what)
+                # The sysroot will use symlinks. Windows supports symlinks
+                # and tarfile.extractall will create them, as long as running as admin
+                # (or if the user has developer mode enabled, but it is assumed most users don't)
+                # However, the slashes will be forward slashes, which breaks things.\
+                # So we loop over and fix all symlinks to use backslashes...
+                # https://github.com/python/cpython/issues/57911
+                if platform.system() == "Windows":
+                    for root, dirs, files in os.walk(final_path):
+                        for file in dirs + files:
+                            file_path = os.path.join(root, file)
+                            if os.path.islink(file_path):
+                                # Python can handle forward slash, so this resolves the correct link path
+                                target_path = os.path.realpath(file_path)
 
-        # Delete old sysroot if installed
-        if os.path.exists(final_path):
-            shutil.rmtree(final_path)
+                                # Convert to relative path and ensure all backlashes
+                                # Also make sure all start with .\ or ..\ (this is what 7zip does when it extracts tar symlinks)
+                                new_target_path = os.path.relpath(target_path, os.path.dirname(file_path))
+                                new_target_path = new_target_path.replace("/", "\\")
 
-        # Move directory
-        shutil.move(tmp_path, final_path)
+                                # Then re-create the link with correct relative paths
+                                os.remove(file_path)
+                                os.symlink(new_target_path, file_path, os.path.isdir(target_path))
+                
+                
+                # Allow all sysroot binaries to execute on macos
+                if platform.system() == "Darwin":
+                    os.system("zsh -c 'chmod -R +x {}'".format(final_path))
+                    os.system("zsh -c 'xattr -dr {}'".format(final_path))
 
-        # Allow all sysroot binaries to execute on macos
-        if platform.system() == "Darwin":
-            os.system("zsh -c 'chmod -R +x {}'".format(final_path))
-            os.system("zsh -c 'xattr -dr {}'".format(final_path))
-
-        # Allow all sysroot binaries to execute on linux
-        if platform.system() == "Linux":
-            os.system("zsh -c 'chmod -R +x {}'".format(final_path))
+                # Allow all sysroot binaries to execute on linux
+                if platform.system() == "Linux":
+                    os.system("zsh -c 'chmod -R +x {}'".format(final_path))
+            else:
+                raise Exception("Not a valid sysroot archive.")
 
     def convert_formats(self, formats) -> str:
         fmt_str = ""
@@ -771,6 +786,20 @@ class DeployToolWindow(QMainWindow):
         dialog.exec()
 
     def install_sysroot_package(self):
+        # Making symlinks requires admin on windows
+        if platform.system() == "Windows":
+            try:
+                if ctypes.windll.shell32.IsUserAnAdmin() != 1:
+                    dialog = QMessageBox(parent=self)
+                    dialog.setIcon(QMessageBox.Warning)
+                    dialog.setText(self.tr("DeployTool must be run as admin to install sysroot."))
+                    dialog.setWindowTitle(self.tr("Error Installing Sysroot"))
+                    dialog.setStandardButtons(QMessageBox.Ok)
+                    dialog.exec()
+                    return
+            except:
+                print("UNABLE TO CHECK ADMIN STATUS")
+        
         fmt_str = self.convert_formats(shutil.get_archive_formats())
         filename = QFileDialog.getOpenFileName(self, self.tr("Open Update Package"), QDir.homePath(), self.tr("Archives (") + fmt_str + ")")[0]
         if filename == "":
