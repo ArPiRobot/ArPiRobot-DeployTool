@@ -515,6 +515,14 @@ class DeployToolWindow(QMainWindow):
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         else:
             startupinfo = None
+        
+        # LLVM Version
+        if shutil.which('clang') is None or shutil.which('lld') is None:
+            self.ui.txt_llvm_version.setText(self.tr("Not Installed"))
+        else:
+            cmd = subprocess.Popen(["clang", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # First line of output is clang version [VERSION]
+            self.ui.txt_llvm_version.setText(cmd.stdout.readline().decode()[14:].strip())
 
         # Load cmake version
         if shutil.which('cmake') is None:
@@ -531,6 +539,13 @@ class DeployToolWindow(QMainWindow):
             cmd = subprocess.Popen(["ninja", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is [VERSION]
             self.ui.txt_ninja_version.setText(cmd.stdout.readline().decode().strip())
+        
+        # Load pkgconfig version
+        if shutil.which('pkg-config') is None:
+            self.ui.txt_pkgconfig_version.setText(self.tr("Not Installed"))
+        else:
+            cmd = subprocess.Popen(["pkg-config", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.ui.txt_pkgconfig_version.setText(cmd.stdout.readline().decode().strip())
         
         # Check for installed sysroots
         found_sysroots = []
