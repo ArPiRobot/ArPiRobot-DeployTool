@@ -1312,7 +1312,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.txt_hostname.setText(hostname)
         self.ui.txt_wifi_ssid.setText(ssid)
         self.ui.txt_wifi_pass.setText(password)
-        if band == "bg":
+        if band == "g":
             self.ui.cbx_wifi_band.setCurrentIndex(0)
             self.ui.cbx_wifi_channel.addItem("Auto")
             self.ui.cbx_wifi_channel.addItems(self.channels_24)
@@ -1384,7 +1384,7 @@ class DeployToolWindow(QMainWindow):
         # country = WIFI_COUNTRY_CODES[self.ui.cbx_wifi_country.currentIndex()]
         
         band_idx = self.ui.cbx_wifi_band.currentIndex()
-        bands = ["bg", "a"]   # 2.4, 5.0
+        bands = ["g", "a"]   # 2.4, 5.0
         band = bands[band_idx]
         
         if len(ssid) < 2:
