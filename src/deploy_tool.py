@@ -1299,11 +1299,11 @@ class DeployToolWindow(QMainWindow):
     def wifi_band_changed(self, index: int):
         if index == 0:
             self.ui.cbx_wifi_channel.clear()
-            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItem("Auto (Not Recommended)")
             self.ui.cbx_wifi_channel.addItems(self.channels_24)
         elif index == 1:
             self.ui.cbx_wifi_channel.clear()
-            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItem("Auto (Not Recommended)")
             self.ui.cbx_wifi_channel.addItems(self.channels_50)
 
     def do_update_network_info(self, hostname: str, ssid: str, password: str, country: str, channel: str, band: str):
@@ -1316,18 +1316,18 @@ class DeployToolWindow(QMainWindow):
         self.ui.cbx_wifi_channel.clear()
 
         if channel == "0":
-            channel = "Auto"
+            channel = "Auto (Not Recommended)"
 
         self.ui.txt_hostname.setText(hostname)
         self.ui.txt_wifi_ssid.setText(ssid)
         self.ui.txt_wifi_pass.setText(password)
         if band == "g":
             self.ui.cbx_wifi_band.setCurrentIndex(0)
-            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItem("Auto (Not Recommended)")
             self.ui.cbx_wifi_channel.addItems(self.channels_24)
         elif band == "a":
             self.ui.cbx_wifi_band.setCurrentIndex(1)
-            self.ui.cbx_wifi_channel.addItem("Auto")
+            self.ui.cbx_wifi_channel.addItem("Auto (Not Recommended)")
             self.ui.cbx_wifi_channel.addItems(self.channels_50)
         
         idx = 0
@@ -1386,7 +1386,7 @@ class DeployToolWindow(QMainWindow):
         ssid = self.ui.txt_wifi_ssid.text()
         psk = self.ui.txt_wifi_pass.text()
         channel = self.ui.cbx_wifi_channel.currentText()
-        if channel == "Auto":
+        if channel == "Auto (Not Recommended)":
             channel = 0
         else:
             channel = int(channel)
