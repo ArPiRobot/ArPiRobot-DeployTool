@@ -517,7 +517,7 @@ class DeployToolWindow(QMainWindow):
             startupinfo = None
         
         # LLVM Version
-        if shutil.which('clang') is None or shutil.which('lld') is None:
+        if shutil.which('clang') is None:
             self.ui.txt_llvm_version.setText(self.tr("Not Installed"))
         else:
             cmd = subprocess.Popen(["clang", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
