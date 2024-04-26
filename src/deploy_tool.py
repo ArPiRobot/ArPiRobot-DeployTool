@@ -525,13 +525,28 @@ class DeployToolWindow(QMainWindow):
             # However, sometimes it's got a system vendor name eg: Ubuntu clang version [VERSION]
             # So just find the first digit and go from there
             line = cmd.stdout.readline().decode().strip()
-            pos = 0
-            for i in range(len(line)):
-                c = line[i]
-                if c.isdigit():
-                    pos = i
-                    break
-            self.ui.txt_llvm_version.setText(line[pos:])
+            if line.lower().find("apple clang") != -1:
+                # Check where brew installs llvm clang on mac
+                if os.path.exists("/usr/local/opt/llvm/bin/clang"):
+                    cmd = subprocess.Popen(["/usr/local/opt/llvm/bin/clang", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    line = cmd.stdout.readline().decode().strip()
+                    pos = 0
+                    for i in range(len(line)):
+                        c = line[i]
+                        if c.isdigit():
+                            pos = i
+                            break
+                    self.ui.txt_llvm_version.setText(line[pos:])
+                else:
+                    self.ui.txt_llvm_version.setText(self.tr("Only found Apple Clang, requires LLVM Clang"))
+            else:
+                pos = 0
+                for i in range(len(line)):
+                    c = line[i]
+                    if c.isdigit():
+                        pos = i
+                        break
+                self.ui.txt_llvm_version.setText(line[pos:])
 
         # Load cmake version
         if shutil.which('cmake') is None:
