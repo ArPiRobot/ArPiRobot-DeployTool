@@ -18,7 +18,7 @@ QApplication.setAttribute(Qt.AA_DontUseNativeMenuBar)
 
 try:
     import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("com.arpirobot.arpirobot-deploytool")
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("io.github.arpirobot.DeployTool")
 except AttributeError:
     pass
 
@@ -53,12 +53,16 @@ if platform.system() == "Linux":
 app = QApplication(sys.argv)
 app.setStyle("fusion")
 
+# This method of associating desktop file with window works on both X11 and wayland
+# See: https://bugreports.qt.io/browse/QTBUG-117772?jql=text%20~%20%22wmclass%22
+app.setDesktopFileName("io.github.arpirobot.DeployTool")
+app.setApplicationName("io.github.arpirobot.DeployTool")
+
 # Theme fixes (only needed for dark theme; light always works properly)
 if app.styleHints().colorScheme() == Qt.ColorScheme.Dark:
     if platform.system() == "Windows":
         # Somehow, this fixes checkboxes being blue on windows dark theme.
         # Not really sure why, but it does.
-        app = QApplication.instance()
         p = app.palette()
         for cg in [QPalette.ColorGroup.Active, QPalette.ColorGroup.Current, QPalette.ColorGroup.Disabled, QPalette.ColorGroup.Inactive]:
             p.setColor(cg, QPalette.ColorRole.Base, p.color(cg, QPalette.ColorRole.Base))

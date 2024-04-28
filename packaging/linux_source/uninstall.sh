@@ -23,10 +23,12 @@ else
     exit 2
 fi
 
-echo "**WARNING:** This will delete the entire directory: $DIR"
-if ! confirm "Continue with uninstall?"; then
-    echo "Cancelling uninstall."
-    exit 0
+if [ "$1" != "-q" ]; then 
+    echo "**WARNING:** This will delete the entire directory: $DIR"
+    if ! confirm "Continue with uninstall?"; then
+        echo "Cancelling uninstall."
+        exit 0
+    fi
 fi
 
 echo "Removing virtual environment"

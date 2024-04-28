@@ -19,7 +19,7 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
-        /opt/ArPiRobot-DeployTool/uninstall.sh
+        /opt/ArPiRobot-DeployTool/uninstall.sh -q
     ;;
 
     failed-upgrade)

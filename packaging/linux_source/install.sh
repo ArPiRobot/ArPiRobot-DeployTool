@@ -35,11 +35,22 @@ python -m pip install -r requirements.txt > /dev/null
 deactivate
 
 # Desktop menu entry
-xdg-desktop-menu uninstall ArPiRobot-DeployTool.desktop > /dev/null 2>&1
+xdg-desktop-menu uninstall io.github.arpirobot.DeployTool.desktop > /dev/null 2>&1
 echo "Adding desktop menu entry"
-printf "[Desktop Entry]\nVersion=1.1\nType=Application\nTerminal=false\nName=ArPiRobot Deploy Tool\nComment=PC-side tool to manage and configure ArPiRobot robots.\nIcon=$DIR/icon.png\nExec=$DIR/start.sh\nStartupWMClass=ArPiRobot-DeployTool\nActions=\nCategories=Development;\nStartupNotify=true\nStartupWMClass=com-arpirobot-deploytool-DeployTool\n" > ArPiRobot-DeployTool.desktop
-chmod 755 ArPiRobot-DeployTool.desktop
-xdg-desktop-menu install --novendor ArPiRobot-DeployTool.desktop
+cat << EOF > io.github.arpirobot.DeployTool.desktop
+[Desktop Entry]
+Version=1.1
+Type=Application
+Terminal=false
+Name=ArPiRobot Deploy TOol
+Comment=PC-side tool to manage and configure ArPiRobot robots.
+Icon=$DIR/icon.png
+Exec=$DIR/start.sh
+Categories=Development;
+StartupWMClass=io.github.arpirobot.DeployTool
+EOF
+chmod 755 io.github.arpirobot.DeployTool.desktop
+xdg-desktop-menu install --novendor io.github.arpirobot.DeployTool.desktop
 
 # Fix directory permissions so non-root users can read it (and subdirectories)
 chmod -R 755 "$DIR"
