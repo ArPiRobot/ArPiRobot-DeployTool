@@ -11,11 +11,11 @@ class AboutDialog(QDialog):
         self.ui.setupUi(self)
 
         license_file = QFile(":/license_text.txt")
-        if license_file.open(QFile.ReadOnly):
-            self.ui.txt_license.setHtml(bytes(license_file.readAll()).decode())
+        if license_file.open(QFile.OpenModeFlag.ReadOnly):
+            self.ui.txt_license.setHtml(bytes(license_file.readAll().data()).decode())
         license_file.close()
 
         third_party_file = QFile(":/third_party_licenses.txt")
-        if third_party_file.open(QFile.ReadOnly):
-            self.ui.txt_third_party.setHtml(bytes(third_party_file.readAll()).decode())
+        if third_party_file.open(QFile.OpenModeFlag.ReadOnly):
+            self.ui.txt_third_party.setHtml(bytes(third_party_file.readAll().data()).decode())
         third_party_file.close()

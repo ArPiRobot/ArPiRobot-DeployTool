@@ -14,7 +14,7 @@ class LogDialog(QDialog):
         self.setWindowTitle(title)
         self.ui.txt_log.setText(log)
 
-        self.ui.txt_log.moveCursor(QTextCursor.End)
-        self.ui.txt_log.moveCursor(QTextCursor.StartOfLine)
+        self.ui.txt_log.moveCursor(QTextCursor.MoveOperation.End)
+        self.ui.txt_log.moveCursor(QTextCursor.MoveOperation.StartOfLine)
 
         

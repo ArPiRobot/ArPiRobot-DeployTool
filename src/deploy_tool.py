@@ -1,13 +1,11 @@
 
-from ast import Tuple
-from genericpath import isdir
 import socket
 import tarfile
-from threading import local
 import traceback
+import typing
 from typing import Any, Callable, List, Optional
-from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRegularExpressionMatch, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
-from PySide6.QtGui import QPalette, QShowEvent, QCloseEvent, QGuiApplication, QIntValidator, QTextCursor, QRegularExpressionValidator, QValidator, QFont
+from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QObject, QRegularExpression, QRunnable, QTextStream, QThreadPool, QTimer, Qt, Signal
+from PySide6.QtGui import QShowEvent, QCloseEvent, QGuiApplication, QTextCursor, QRegularExpressionValidator, QValidator, QFont
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QApplication, QWidget
 from paramiko.pkey import PKey
 from paramiko.sftp import SFTPError
@@ -37,7 +35,7 @@ from enum import Enum, auto
 class DTProgressDialog(QProgressDialog):
     def __init__(self, parent: Optional[QWidget]):
         super().__init__(parent=parent)
-        self.setCancelButton(None)
+        self.setCancelButton(None) # type: ignore
     
     def closeEvent(self, event: QCloseEvent) -> None:
         event.ignore()
@@ -89,17 +87,17 @@ class WifiSsidValidator(QValidator):
     
     def validate(self, input: str, pos: int) -> object:
         if len(input) > 32:
-            return QRegularExpressionValidator.Invalid
+            return QRegularExpressionValidator.State.Invalid
         input_bytes = list(input.encode())
         for b in input_bytes:
             # Printable ASCII range
             if b < 32 or b > 126:
-                return QValidator.Invalid
+                return QValidator.State.Invalid
             # Disallowed in printable ASCII range
             # ? " $ [ \ ] +
             if b in [63, 34, 36, 91, 93, 43]:
-                return QValidator.Invalid
-        return QValidator.Acceptable
+                return QValidator.State.Invalid
+        return QValidator.State.Acceptable
 
 
 class WifiPskValidator(QValidator):
@@ -108,13 +106,13 @@ class WifiPskValidator(QValidator):
     
     def validate(self, input: str, pos: int) -> object:
         if len(input) > 63:
-            return QRegularExpressionValidator.Invalid
+            return QRegularExpressionValidator.State.Invalid
         input_bytes = list(input.encode())
         for b in input_bytes:
             # Printable ASCII range
             if b < 32 or b > 126:
-                return QValidator.Invalid
-        return QValidator.Acceptable
+                return QValidator.State.Invalid
+        return QValidator.State.Acceptable
 
 
 class DeployToolWindow(QMainWindow):
@@ -139,8 +137,8 @@ class DeployToolWindow(QMainWindow):
 
         # Append version to about label
         version_file = QFile(":/version.txt")
-        if version_file.open(QIODevice.ReadOnly):
-            ver = bytes(version_file.readLine()).decode().replace("\n", "").replace("\r", "")
+        if version_file.open(QIODevice.OpenModeFlag.ReadOnly):
+            ver = bytes(version_file.readLine().data()).decode().replace("\n", "").replace("\r", "")
             self.setWindowTitle(self.windowTitle() + " v" + ver)
         version_file.close()
 
@@ -235,7 +233,7 @@ class DeployToolWindow(QMainWindow):
         size = QFont().pointSizeF()
         if settings_manager.larger_fonts:
             size *= 1.2
-        app = QApplication.instance()
+        app = typing.cast(QApplication, QApplication.instance())
         app.setStyleSheet("{0}\n{1}".format(app.styleSheet(), "*{{font-size: {0}pt}}".format(size)))
 
     def showEvent(self, event: QShowEvent):
@@ -262,7 +260,7 @@ class DeployToolWindow(QMainWindow):
     def open_settings(self):
         dialog = SettingsDialog(self)
         res = dialog.exec()
-        if res == QDialog.Accepted:
+        if res == QDialog.DialogCode.Accepted:
             dialog.save_settings()
             self.__set_font_size()
 
@@ -300,7 +298,7 @@ class DeployToolWindow(QMainWindow):
     
     def show_progress(self, title: str, msg: str):
         self.pdialog.hide()
-        self.pdialog.setWindowModality(Qt.WindowModal)
+        self.pdialog.setWindowModality(Qt.WindowModality.WindowModal)
         self.pdialog.setModal(True)
         self.pdialog.setWindowTitle(title)
         self.pdialog.setLabelText(msg)
@@ -407,7 +405,7 @@ class DeployToolWindow(QMainWindow):
     # Adapted too return all instances of the command in the path
     # Instead of just the first one found
     # Mimics behavior of Linux "which -a"
-    def which_all(self, cmd, mode=os.F_OK | os.X_OK, path=None):
+    def which_all(self, cmd, mode=os.F_OK | os.X_OK, path=None) -> List[str]:
         # Check that a given file can be accessed with the correct mode.
         # Additionally check that `file` is not a directory, as on Windows
         # directories pass the os.access check.
@@ -427,7 +425,7 @@ class DeployToolWindow(QMainWindow):
         if os.path.dirname(cmd):
             if _access_check(cmd, mode):
                 return cmd
-            return None
+            return []
 
         use_bytes = isinstance(cmd, bytes)
 
@@ -444,7 +442,7 @@ class DeployToolWindow(QMainWindow):
 
         # PATH='' doesn't match, whereas PATH=':' looks in the current directory
         if not path:
-            return None
+            return []
 
         if use_bytes:
             path = os.fsencode(path)
@@ -501,7 +499,7 @@ class DeployToolWindow(QMainWindow):
         path = QDir.homePath() + "/.arpirobot/corelib/version.txt"
         if QFileInfo(path).exists():
             file = QFile(path)
-            if file.open(QIODevice.ReadOnly):
+            if file.open(QIODevice.OpenModeFlag.ReadOnly):
                 instream = QTextStream(file)
                 version = instream.readLine()
                 self.ui.txt_corelib_version.setText(version)
@@ -511,8 +509,8 @@ class DeployToolWindow(QMainWindow):
             self.ui.txt_corelib_version.setText("Not Installed")
         
         if platform.system() == "Windows":
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo = subprocess.STARTUPINFO()                      # type: ignore
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW      # type: ignore
         else:
             startupinfo = None
         
@@ -524,12 +522,16 @@ class DeployToolWindow(QMainWindow):
             # First line of output is clang version [VERSION]
             # However, sometimes it's got a system vendor name eg: Ubuntu clang version [VERSION]
             # So just find the first digit and go from there
-            line = cmd.stdout.readline().decode().strip()
+            line = ""
+            if cmd.stdout is not None:
+                line = cmd.stdout.readline().decode().strip()
             if line.lower().find("apple clang") != -1:
                 # Check where brew installs llvm clang on mac
                 if os.path.exists("/usr/local/opt/llvm/bin/clang"):
                     cmd = subprocess.Popen(["/usr/local/opt/llvm/bin/clang", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    line = cmd.stdout.readline().decode().strip()
+                    line = ""
+                    if cmd.stdout is not None:
+                        line = cmd.stdout.readline().decode().strip()
                     pos = 0
                     for i in range(len(line)):
                         c = line[i]
@@ -554,7 +556,8 @@ class DeployToolWindow(QMainWindow):
         else:
             cmd = subprocess.Popen(["cmake", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is cmake version [VERSION]
-            self.ui.txt_cmake_version.setText(cmd.stdout.readline().decode()[14:].strip())
+            if cmd.stdout is not None:
+                self.ui.txt_cmake_version.setText(cmd.stdout.readline().decode()[14:].strip())
 
         # Load ninja version
         if shutil.which('ninja') is None:
@@ -562,14 +565,16 @@ class DeployToolWindow(QMainWindow):
         else:
             cmd = subprocess.Popen(["ninja", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is [VERSION]
-            self.ui.txt_ninja_version.setText(cmd.stdout.readline().decode().strip())
+            if cmd.stdout is not None:
+                self.ui.txt_ninja_version.setText(cmd.stdout.readline().decode().strip())
         
         # Load pkgconfig version
         if shutil.which('pkg-config') is None:
             self.ui.txt_pkgconfig_version.setText(self.tr("Not Installed"))
         else:
             cmd = subprocess.Popen(["pkg-config", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            self.ui.txt_pkgconfig_version.setText(cmd.stdout.readline().decode().strip())
+            if cmd.stdout is not None:
+                self.ui.txt_pkgconfig_version.setText(cmd.stdout.readline().decode().strip())
         
         # Check for installed sysroots
         found_sysroots = []
@@ -604,7 +609,8 @@ class DeployToolWindow(QMainWindow):
         for interpreter in interpreters:
             cmd = subprocess.Popen([interpreter.replace("\r", "").replace("\n", ""), "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Output: Python [VERSION]
-            versions.append(cmd.stdout.readline().decode()[7:].strip())
+            if cmd.stdout is not None:
+                versions.append(cmd.stdout.readline().decode()[7:].strip())
         # Remove duplicate version numbers
         versions = list(dict.fromkeys(versions))
         if len(versions) == 0:
@@ -648,10 +654,10 @@ class DeployToolWindow(QMainWindow):
     def handle_update_failure(self, e: Exception):
         self.hide_progress()
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Warning)
+        dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setText(str(e))
         dialog.setWindowTitle(self.tr("Error Installing Update Package"))
-        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         dialog.exec()
 
     def install_update_package(self):
@@ -676,9 +682,9 @@ class DeployToolWindow(QMainWindow):
             self.add_var_to_profile(home + "/.zshrc", "PYTHONPATH", path)
             self.add_var_to_profile(home + "/.profile", "PYTHONPATH", path)
         if platform.system() == "Linux":
-            if not os.path.exists(home + "/.config/environment.d/"):
-                os.mkdir(home + "/.config/environment.d/")
-            self.add_var_to_config(home + "/.config/environment.d/deploy-tool.conf", "PYTHONPATH", path)
+            if not os.path.exists("{}/.config/environment.d/".format(home)):
+                os.mkdir("{}/.config/environment.d/".format(home))
+            self.add_var_to_config("{}/.config/environment.d/deploy-tool.conf".format(home), "PYTHONPATH", path)
 
     def add_var_windows(self, var: str, value: str):
         value = value.replace("/", "\\")
@@ -696,8 +702,8 @@ class DeployToolWindow(QMainWindow):
         else:
             cmd = "cmd /s /c \"setx {0} \"{1};%{0}%\"".format(var, value)
         if platform.system() == "Windows":
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo = subprocess.STARTUPINFO()                  # type: ignore
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # type: ignore
         else:
             startupinfo = None
         subprocess.call(cmd, startupinfo=startupinfo)
@@ -750,7 +756,10 @@ class DeployToolWindow(QMainWindow):
         with tarfile.open(filename) as tf:
             if "what.txt" in tf.getnames():
                 # Construct destination
-                what = tf.extractfile("what.txt").readline().strip().decode()
+                whatfile = tf.extractfile("what.txt")
+                what = ""
+                if whatfile is not None:
+                    what = whatfile.readline().strip().decode()
                 final_path = QDir.homePath() + "/.arpirobot/{0}".format(what)
 
                 # Delete old sysroot if installed
@@ -818,22 +827,22 @@ class DeployToolWindow(QMainWindow):
         self.hide_progress()
         print(e)
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Warning)
+        dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setText(self.tr("Make sure the archive exists, is a known format, and is not corrupted."))
         dialog.setWindowTitle(self.tr("Error Installing Sysroot"))
-        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         dialog.exec()
 
     def install_sysroot_package(self):
         # Making symlinks requires admin on windows
         if platform.system() == "Windows":
             try:
-                if ctypes.windll.shell32.IsUserAnAdmin() != 1:
+                if ctypes.windll.shell32.IsUserAnAdmin() != 1:  # type: ignore
                     dialog = QMessageBox(parent=self)
-                    dialog.setIcon(QMessageBox.Warning)
+                    dialog.setIcon(QMessageBox.Icon.Warning)
                     dialog.setText(self.tr("DeployTool must be run as admin to install sysroot."))
                     dialog.setWindowTitle(self.tr("Error Installing Sysroot"))
-                    dialog.setStandardButtons(QMessageBox.Ok)
+                    dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
                     dialog.exec()
                     return
             except:
@@ -893,9 +902,9 @@ class DeployToolWindow(QMainWindow):
     def handle_connection_failure(self, e: Exception):
         self.hide_progress()
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Warning)
+        dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setWindowTitle("Connect Failed!")
-        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         if isinstance(e, socket.timeout):
             dialog.setText("Unable to connect to the robot.")
         else:
@@ -906,15 +915,18 @@ class DeployToolWindow(QMainWindow):
     def handle_ssh_disconnect(self):
         self.do_disconnect()
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Warning)
+        dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setText("Connection to the robot was lost.")
         dialog.setWindowTitle("Disconnected")
-        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         dialog.exec()
 
     def check_ssh_connection(self):
         if self.ssh_connected:
-            if not self.ssh.get_transport().is_active():
+            transport = self.ssh.get_transport()
+            if transport is None:
+                self.handle_ssh_disconnect()
+            elif not transport.is_active():
                 self.handle_ssh_disconnect()
             else:
                 # is_active doesn't always work (eg change WiFi network on Linux)
@@ -1098,10 +1110,10 @@ class DeployToolWindow(QMainWindow):
     def deploy_failed(self, e: Exception):
         self.hide_progress()
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Warning)
+        dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setText(str(e))
         dialog.setWindowTitle(self.tr("Deploy Program Failed"))
-        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         dialog.exec()
 
     def deploy_program(self):
@@ -1123,9 +1135,9 @@ class DeployToolWindow(QMainWindow):
         self.clear_robot_log_sig.emit()
 
     def do_append_robot_log(self, txt: str):
-        self.ui.txt_robot_log.moveCursor(QTextCursor.End)
+        self.ui.txt_robot_log.moveCursor(QTextCursor.MoveOperation.End)
         self.ui.txt_robot_log.insertPlainText(txt)
-        self.ui.txt_robot_log.moveCursor(QTextCursor.End)
+        self.ui.txt_robot_log.moveCursor(QTextCursor.MoveOperation.End)
     
     def append_robot_log(self, txt: str):
         self.append_log_sig.emit(txt)
@@ -1246,10 +1258,10 @@ class DeployToolWindow(QMainWindow):
     def restart_program_fail(self, e: Exception):
         self.hide_progress()
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Warning)
+        dialog.setIcon(QMessageBox.Icon.Warning)
         dialog.setText(str(e))
         dialog.setWindowTitle(self.tr("Restart Robot Program Failed"))
-        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         dialog.exec()
 
     def restart_robot_program(self):
@@ -1413,19 +1425,19 @@ class DeployToolWindow(QMainWindow):
         
         if len(ssid) < 2:
             dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
+            dialog.setIcon(QMessageBox.Icon.Warning)
             dialog.setText(self.tr("SSID must be at least 2 characters in length."))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
-            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             dialog.exec()
             return
         
         if len(psk) < 8:
             dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
+            dialog.setIcon(QMessageBox.Icon.Warning)
             dialog.setText(self.tr("Password must be at least 8 characters in length."))
             dialog.setWindowTitle(self.tr("WiFi Settings Invalid"))
-            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             dialog.exec()
             return
 
@@ -1438,12 +1450,12 @@ class DeployToolWindow(QMainWindow):
     def post_apply_reboot(self):
         self.hide_progress()
         dialog = QMessageBox(parent=self)
-        dialog.setIcon(QMessageBox.Question)
+        dialog.setIcon(QMessageBox.Icon.Question)
         dialog.setText(self.tr("The hostname was successfully changed, however a reboot is necessary for changes to take effect. Reboot now?"))
         dialog.setWindowTitle(self.tr("Hostname Changed"))
-        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dialog.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         res = dialog.exec()
-        if res == QMessageBox.Yes:
+        if res == QMessageBox.StandardButton.Yes:
             self.reboot_robot()
 
     def do_apply_hostname(self, hostname: str):
@@ -1479,21 +1491,21 @@ class DeployToolWindow(QMainWindow):
         path = shutil.which(player)
         if path == "" or path == None:
             dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
-            dialog.setTextFormat(Qt.RichText)
+            dialog.setIcon(QMessageBox.Icon.Warning)
+            dialog.setTextFormat(Qt.TextFormat.RichText)
             dialog.setText(self.tr("<p>The selected player was not found on your system. Download and install the player and make sure the command is in your system path. You will need to restart the deploy tool after chaning the path environment variable.</p><p>You can also use the system package manager (on Linux) or a third party one (<a href=\"https://scoop.sh/\">scoop</a> or <a href=\"https://chocolatey.org/\">chocolatey</a> on Windows or <a href=\"https://brew.sh\">homebrew</a> on macOS) to install the packages. Typically the packages are named ffmpeg (includes ffplay), mpv, and mplayer respectively.</p>"))
             dialog.setWindowTitle(self.tr("Player not found"))
-            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             dialog.exec()
             return
         
         # Make sure a stream is selected
         if stream == "":
             dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
+            dialog.setIcon(QMessageBox.Icon.Warning)
             dialog.setText(self.tr("No stream key. Enter a stream key to play a stream."))
             dialog.setWindowTitle(self.tr("Cannot Play Stream"))
-            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             dialog.exec()
             return
 
@@ -1511,18 +1523,18 @@ class DeployToolWindow(QMainWindow):
 
         # Launch player
         if platform.system() == "Windows":
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo = subprocess.STARTUPINFO()                  # type: ignore
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # type: ignore
         else:
             startupinfo = None
         try:
             p = subprocess.Popen(cmd, startupinfo=startupinfo, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             dialog = QMessageBox(parent=self)
-            dialog.setIcon(QMessageBox.Warning)
+            dialog.setIcon(QMessageBox.Icon.Warning)
             dialog.setText(str(e))
             dialog.setWindowTitle(self.tr("Failed to Launch Video Player"))
-            dialog.setStandardButtons(QMessageBox.Ok)
+            dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             dialog.exec()
             return
         pdialog = PlayStreamDialog("Playing Stream", "Playing stream '{0}' using {1}...".format(stream, player), p, self)

@@ -6,19 +6,19 @@ import os
 import subprocess
 
 
-from PySide6.QtWidgets import QApplication, QStyleFactory
-from PySide6.QtGui import QGuiApplication, QPalette, QColor, QStyleHints
-from PySide6.QtCore import Qt, QFile, QIODevice, QEventLoop
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QGuiApplication, QPalette
+from PySide6.QtCore import Qt
 
 from deploy_tool import DeployToolWindow
 
-QApplication.setAttribute(Qt.AA_DontUseNativeMenuBar)
+QApplication.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeMenuBar)
 
 # TODO: Stdout and Stderr redirect to log file (along with log data shown in DS log window)
 
 try:
     import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("io.github.arpirobot.DeployTool")
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("io.github.arpirobot.DeployTool") # type: ignore
 except AttributeError:
     pass
 
