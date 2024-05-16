@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>io.github.arpirobot.DeployTool</id>
+    <metadata_license>MIT</metadata_license>
+    <project_license>LGPL-3.0</project_license>
+    <name>ArPiRobot Drive Station</name>
+    <summary>PC-side tool to manage and configure ArPiRobot robots.</summary>
+    <description>
+        <p>Deploy robot programs to your ArPiRobot robot.</p>
+    </description>
+    <launchable type="desktop-id">io.github.arpirobot.DeployTool.desktop</launchable>
+    <url type="homepage">https://arpirobot.github.io/</url>
+</component>

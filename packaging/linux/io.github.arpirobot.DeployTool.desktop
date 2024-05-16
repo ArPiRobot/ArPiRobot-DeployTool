@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.1
+Type=Application
+Terminal=false
+Name=ArPiRobot Deploy Tool
+Comment=PC-side tool to manage and configure ArPiRobot robots.
+Icon=arpirobot-deploytool
+Exec=AppRun
+Categories=Development;
+StartupWMClass=io.github.arpirobot.DeployTool
+X-AppImage-Version=1.1.0-rc1
+X-AppImage-Name=ArPiRobot-DeployTool
+X-AppImage-Arch=x86_64
