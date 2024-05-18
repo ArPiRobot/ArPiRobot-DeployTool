@@ -40,7 +40,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_thispc">
        <attribute name="title">
@@ -415,35 +415,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_22">
-          <property name="text">
-           <string>Advanced:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_relaunch_debug">
-          <property name="text">
-           <string>Relaunch Under Debug Server</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_27">
-          <property name="font">
-           <font>
-            <italic>true</italic>
-           </font>
-          </property>
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Relaunches the currently deployed program&lt;br/&gt;under a debug server so a remote client can attach&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="verticalSpacer_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -780,6 +751,13 @@
             <widget class="QPushButton" name="btn_restart_program">
              <property name="text">
               <string>Restart Program</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_debug_program">
+             <property name="text">
+              <string>Debug Program</string>
              </property>
             </widget>
            </item>
