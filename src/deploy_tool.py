@@ -203,6 +203,7 @@ class DeployToolWindow(QMainWindow):
         self.ui.btn_shutdown.clicked.connect(self.shutdown_robot)
         self.ui.btn_reboot.clicked.connect(self.reboot_robot)
         self.ui.btn_restart_program.clicked.connect(self.restart_robot_program)
+        self.ui.btn_debug_program.clicked.connect(self.debug_robot_program)
         self.ui.btn_make_writable.clicked.connect(self.make_robot_writable)
         self.ui.btn_readonly.clicked.connect(self.make_robot_readonly)
 
@@ -1250,7 +1251,25 @@ class DeployToolWindow(QMainWindow):
             _, stdout, _ = self.ssh.exec_command("dt-start_program.sh", timeout=10)
             stdout.channel.recv_exit_status()
         except SSHException:
-            raise Exception(self.tr("Failed to stop robot program."))
+            raise Exception(self.tr("Failed to start robot program."))
+    
+    def do_debug_program(self):
+        try:
+            _, stdout, _ = self.ssh.exec_command("dt-stop_program.sh", timeout=10)
+            stdout.channel.recv_exit_status()
+        except SSHException:
+            raise Exception("Failed to stop robot program.")
+
+        # Clear log when program restarts 
+        self.clear_robot_log()
+        time.sleep(0.1)
+        
+        self.change_progress_msg(self.tr("Starting robot program..."))
+        try:
+            _, stdout, _ = self.ssh.exec_command("dt-start_program_debug.sh", timeout=10)
+            stdout.channel.recv_exit_status()
+        except SSHException:
+            raise Exception(self.tr("Failed to start robot program."))
 
     def restart_program_success(self, res: Any):
         self.hide_progress()
@@ -1264,11 +1283,30 @@ class DeployToolWindow(QMainWindow):
         dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
         dialog.exec()
 
+    def debug_program_success(self, res: Any):
+        self.hide_progress()
+    
+    def debug_program_fail(self, e: Exception):
+        self.hide_progress()
+        dialog = QMessageBox(parent=self)
+        dialog.setIcon(QMessageBox.Icon.Warning)
+        dialog.setText(str(e))
+        dialog.setWindowTitle(self.tr("Debug Robot Program Failed"))
+        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+        dialog.exec()
+
     def restart_robot_program(self):
         self.show_progress(self.tr("Restarting Robot Program"), self.tr("Stopping robot program..."))
         task = Task(self, self.do_restart_program)
         task.task_complete.connect(self.restart_program_success)
         task.task_exception.connect(self.restart_program_fail)
+        self.start_task(task)
+    
+    def debug_robot_program(self):
+        self.show_progress(self.tr("Restarting Robot Program"), self.tr("Stopping robot program..."))
+        task = Task(self, self.do_debug_program)
+        task.task_complete.connect(self.debug_program_success)
+        task.task_exception.connect(self.debug_program_fail)
         self.start_task(task)
 
     def make_robot_writable(self):
