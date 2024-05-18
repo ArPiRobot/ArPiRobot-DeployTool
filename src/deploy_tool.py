@@ -153,6 +153,7 @@ class DeployToolWindow(QMainWindow):
         self.ssh.set_missing_host_key_policy(AcceptMissingKeyPolicy())
         self.ssh_check_timer = QTimer()
         self.ssh_connected = False
+        self.ssh_fail_count = 0
 
         # Populate connection fields with default information
         self.ui.txt_address.setText(settings_manager.robot_address)
@@ -882,6 +883,7 @@ class DeployToolWindow(QMainWindow):
         self.enable_robot_tabs()
         self.ui.btn_connect.setText(self.tr("Disconnect"))
         self.ssh_connected = True
+        self.ssh_fail_count = 0
         self.hide_progress()
 
         # Don't keep data from old connections
@@ -923,6 +925,8 @@ class DeployToolWindow(QMainWindow):
         dialog.exec()
 
     def check_ssh_connection(self):
+        # TODO: Try to replace this by setting socket options
+        # as Drive Station does
         if self.ssh_connected:
             transport = self.ssh.get_transport()
             if transport is None:
@@ -932,11 +936,16 @@ class DeployToolWindow(QMainWindow):
             else:
                 # is_active doesn't always work (eg change WiFi network on Linux)
                 try:
-                    _, stdout, _ = self.ssh.exec_command("true", timeout=3)
+                    _, stdout, _ = self.ssh.exec_command("true", timeout=1)
                     stdout.channel.recv_exit_status()
                 except:
-                    # Timed out (or failed to even open session). Disconnected.
-                    self.handle_ssh_disconnect()
+                    self.ssh_fail_count += 1
+                    if self.ui.cbx_longer_timeouts.isChecked():
+                        limit = 5
+                    else:
+                        limit = 3
+                    if self.ssh_fail_count >= limit:
+                        self.handle_ssh_disconnect()
                 
 
     def toggle_connection(self):
