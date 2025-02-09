@@ -925,8 +925,6 @@ class DeployToolWindow(QMainWindow):
         dialog.exec()
 
     def check_ssh_connection(self):
-        # TODO: Try to replace this by setting socket options
-        # as Drive Station does
         if self.ssh_connected:
             transport = self.ssh.get_transport()
             if transport is None:
