@@ -114,7 +114,6 @@ class WifiPskValidator(QValidator):
                 return QValidator.State.Invalid
         return QValidator.State.Acceptable
 
-
 class DeployToolWindow(QMainWindow):
 
     change_progress_msg_sig = Signal(str)
@@ -134,6 +133,15 @@ class DeployToolWindow(QMainWindow):
         # UI setup
         self.ui = Ui_DeployTool()
         self.ui.setupUi(self)
+
+        # Used to pass info from thread that reads info to ui thread
+        self.tpc_corelib_version = ""
+        self.tpc_llvm_version = ""
+        self.tpc_cmake_version = ""
+        self.tpc_ninja_version = ""
+        self.tpc_pkg_config_version = ""
+        self.tpc_sysroot_versions = ""
+        self.tpc_python_versions = ""
 
         # Append version to about label
         version_file = QFile(":/version.txt")
@@ -395,16 +403,28 @@ class DeployToolWindow(QMainWindow):
         print(e)
         traceback.print_exc()
 
+    def handle_populate_this_pc_complete(self):
+        self.hide_progress()
+        # Can't set UI elements on bg thread. Have to do this on
+        # main thread once bg thread done populating info
+        self.ui.txt_corelib_version.setText(self.tpc_corelib_version)
+        self.ui.txt_llvm_version.setText(self.tpc_llvm_version)
+        self.ui.txt_cmake_version.setText(self.tpc_cmake_version)
+        self.ui.txt_ninja_version.setText(self.tpc_ninja_version)
+        self.ui.txt_pkgconfig_version.setText(self.tpc_pkg_config_version)
+        self.ui.txt_sysroot.setText(self.tpc_sysroot_versions)
+        self.ui.txt_pc_python_version.setText(self.tpc_python_versions)
+
     def populate_this_pc(self):
         self.show_progress("Searching", "Searching for Tools...")
         task = Task(self, self.do_populate_this_pc)
-        task.task_complete.connect(self.hide_progress)
+        task.task_complete.connect(self.handle_populate_this_pc_complete)
         task.task_exception.connect(self.handle_populate_this_pc_exec)
         self.start_task(task)
 
     # Copied from cpython shutil source
     # https://github.com/python/cpython/blob/main/Lib/shutil.py
-    # Adapted too return all instances of the command in the path
+    # Adapted to return all instances of the command in the path
     # Instead of just the first one found
     # Mimics behavior of Linux "which -a"
     def which_all(self, cmd, mode=os.F_OK | os.X_OK, path=None) -> List[str]:
@@ -504,11 +524,11 @@ class DeployToolWindow(QMainWindow):
             if file.open(QIODevice.OpenModeFlag.ReadOnly):
                 instream = QTextStream(file)
                 version = instream.readLine()
-                self.ui.txt_corelib_version.setText(version)
+                self.tpc_corelib_version = version
             else:
-                self.ui.txt_corelib_version.setText("Unknown Version")
+                self.tpc_corelib_version = "Unknown Version"
         else:
-            self.ui.txt_corelib_version.setText("Not Installed")
+            self.tpc_corelib_version = "Not Installed"
         
         if platform.system() == "Windows":
             startupinfo = subprocess.STARTUPINFO()                      # type: ignore
@@ -518,7 +538,7 @@ class DeployToolWindow(QMainWindow):
         
         # LLVM Version
         if shutil.which('clang') is None:
-            self.ui.txt_llvm_version.setText(self.tr("Not Installed"))
+            self.tpc_llvm_version = self.tr("Not Installed")
         else:
             cmd = subprocess.Popen(["clang", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is clang version [VERSION]
@@ -540,9 +560,9 @@ class DeployToolWindow(QMainWindow):
                         if c.isdigit():
                             pos = i
                             break
-                    self.ui.txt_llvm_version.setText(line[pos:])
+                    self.tpc_llvm_version = line[pos:]
                 else:
-                    self.ui.txt_llvm_version.setText(self.tr("Only found Apple Clang, requires LLVM Clang"))
+                    self.tpc_llvm_version = self.tr("Only found Apple Clang, requires LLVM Clang")
             else:
                 pos = 0
                 for i in range(len(line)):
@@ -550,33 +570,33 @@ class DeployToolWindow(QMainWindow):
                     if c.isdigit():
                         pos = i
                         break
-                self.ui.txt_llvm_version.setText(line[pos:])
+                self.tpc_llvm_version = line[pos:]
 
         # Load cmake version
         if shutil.which('cmake') is None:
-            self.ui.txt_cmake_version.setText(self.tr("Not Installed"))
+            self.tpc_cmake_version = self.tr("Not Installed")
         else:
             cmd = subprocess.Popen(["cmake", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is cmake version [VERSION]
             if cmd.stdout is not None:
-                self.ui.txt_cmake_version.setText(cmd.stdout.readline().decode()[14:].strip())
+                self.tpc_cmake_version = cmd.stdout.readline().decode()[14:].strip()
 
         # Load ninja version
         if shutil.which('ninja') is None:
-            self.ui.txt_ninja_version.setText(self.tr("Not Installed"))
+            self.tpc_ninja_version = self.tr("Not Installed")
         else:
             cmd = subprocess.Popen(["ninja", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # First line of output is [VERSION]
             if cmd.stdout is not None:
-                self.ui.txt_ninja_version.setText(cmd.stdout.readline().decode().strip())
+                self.tpc_ninja_version = cmd.stdout.readline().decode().strip()
         
         # Load pkgconfig version
         if shutil.which('pkg-config') is None:
-            self.ui.txt_pkgconfig_version.setText(self.tr("Not Installed"))
+            self.tpc_pkg_config_version = self.tr("Not Installed")
         else:
             cmd = subprocess.Popen(["pkg-config", "--version"], startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if cmd.stdout is not None:
-                self.ui.txt_pkgconfig_version.setText(cmd.stdout.readline().decode().strip())
+                self.tpc_pkg_config_version = cmd.stdout.readline().decode().strip()
         
         # Check for installed sysroots
         found_sysroots = []
@@ -595,9 +615,9 @@ class DeployToolWindow(QMainWindow):
                         version = "unknown"
                     found_sysroots.append("{} ({})".format(f, version))
         if len(found_sysroots) == 0:
-            self.ui.txt_sysroot.setText("No sysroots installed.")
+            self.tpc_sysroot_versions = "No sysroots installed."
         else:
-            self.ui.txt_sysroot.setText(", ".join(found_sysroots))
+            self.tpc_sysroot_versions = ", ".join(found_sysroots)
 
         # Find any python interpreters in path. List versions
         versions = []
@@ -616,13 +636,13 @@ class DeployToolWindow(QMainWindow):
         # Remove duplicate version numbers
         versions = list(dict.fromkeys(versions))
         if len(versions) == 0:
-            self.ui.txt_pc_python_version.setText("Not Installed")
+            self.tpc_python_versions = "Not Installed"
         else:
             v_str = versions[0]
             for v in versions[1:]:
                 if v != "":
                     v_str = "{0}, {1}".format(v_str, v)
-            self.ui.txt_pc_python_version.setText(v_str)
+            self.tpc_python_versions = v_str
 
     def do_update_package_installation(self, filename: str):
         with ZipFile(filename) as zfile:
