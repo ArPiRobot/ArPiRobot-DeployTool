@@ -42,7 +42,7 @@ cd ..
 # Create AppImage
 ################################################################################
 echo "**Creating AppImage**"
-wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage -O appimagetool
+wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
 chmod +x ./appimagetool
 pushd linux/ > /dev/null
 cp io.github.arpirobot.DeployTool.desktop dist/ArPiRobot-DeployTool
