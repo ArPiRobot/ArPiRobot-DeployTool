@@ -22,7 +22,7 @@ jobs:
           path: ./packaging/dist/*
           retention-days: 1
   BuildMacOS:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -40,7 +40,7 @@ jobs:
           retention-days: 1
   BuildLinux:
     runs-on: ubuntu-latest
-    container: python:3.10.14-bullseye
+    container: python:3.10.20-bookworm
     steps:
       - uses: actions/checkout@v4
       - run: apt-get update
